@@ -124,19 +124,18 @@ pub fn renderIntOrFloat(
                         value.*,
                         .{ .mode = .decimal, .precision = null },
                     ) catch @panic("failed to format float");
-                    entity_inspector.active_edit.float.input_buffer[edit_buffer.len] = 0;
-                    entity_inspector.active_edit.float.input_buffer[entity_inspector.active_edit.float.input_buffer.len - 1] = 0;
+                    @memset(entity_inspector.active_edit.float.input_buffer[edit_buffer.len..], 0);
                 }
+
+                const used_text_buffer = std.mem.span(@as([*:0]u8, @ptrCast(&entity_inspector.active_edit.float.input_buffer)));
+                var tmp_float: f32 = std.fmt.parseFloat(f32, used_text_buffer) catch 0;
+                _ = rgui.valueBoxFloat(value_bound, "", used_text_buffer, &tmp_float, edit_mode);
+                value.* = @floatCast(tmp_float);
+            } else {
+                const used_text_buffer = text_buffer[0..float_str.len :0];
+                var tmp_float: f32 = @floatCast(value.*);
+                _ = rgui.valueBoxFloat(value_bound, "", used_text_buffer, &tmp_float, edit_mode);
             }
-
-            const used_text_buffer = if (edit_mode)
-                entity_inspector.active_edit.float.input_buffer[0 .. entity_inspector.active_edit.float.input_buffer.len - 1 :0]
-            else
-                text_buffer[0..float_str.len :0];
-
-            var tmp_float: f32 = @floatCast(value.*);
-            _ = rgui.valueBoxFloat(value_bound, "", used_text_buffer, &tmp_float, edit_mode);
-            value.* = @floatCast(tmp_float);
         },
         else => unreachable,
     }
