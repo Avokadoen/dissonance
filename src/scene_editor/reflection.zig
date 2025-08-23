@@ -103,7 +103,6 @@ pub fn renderIntOrFloat(
         },
         .float => {
             const edit_mode = rl.checkCollisionPointRec(rl.getMousePosition(), value_bound);
-
             var text_buffer: [64]u8 = undefined;
             const float_str = std.fmt.formatFloat(
                 &text_buffer,

@@ -129,17 +129,6 @@ pub fn main() anyerror!void {
     var game_view = try GameView.init();
     defer game_view.deinit();
 
-    _ = try storage.createEntity(.{
-        SceneEditor.components.EditorInfo.init("test"),
-        TestComponent{},
-    });
-
-    for (0..1) |index| {
-        var name_buf: ["testXXXXXX".len]u8 = undefined;
-        const name = try std.fmt.bufPrint(&name_buf, "test{d}", .{index});
-        _ = try storage.createEntity(.{SceneEditor.components.EditorInfo.init(name)});
-    }
-
     // Main game loop
 
     var total_time: f64 = 0;

@@ -51,5 +51,3 @@ pub const EditorInfo = struct {
         parent_bounds.y += text_box_bounds.height + label_bounds.height + layout_config.EntityInspector.spacing;
     }
 };
-
-pub const queries = struct {};
