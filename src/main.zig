@@ -10,7 +10,7 @@ const SceneEditor = @import("SceneEditor.zig");
 
 const window_title = "dissonance";
 
-const TestComponent = struct {
+pub const TestComponent = struct {
     cocky_want_boing_boing: bool = true,
     killy_count: u32 = 69,
     cool_factor: f64 = 100,
@@ -26,15 +26,64 @@ const TestComponent = struct {
     mood: enum { happy, sad } = .happy,
 };
 
-const A = struct {};
+pub const A = struct {};
+
+pub const Spinny = struct {
+    offset: f64 = 0,
+    radius: f32 = 100,
+};
+
+pub const Position = struct {
+    value: rl.Vector2,
+};
 
 pub const components = .{
     SceneEditor.components.EditorInfo,
     TestComponent,
     A,
+    Spinny,
+    Position,
+};
+
+const UpdateEventArgument = struct {
+    total_time: f64,
+    delta_time: f32,
+    frame_dim: rl.Vector2,
+};
+
+pub const systems = struct {
+    const UpdateSpinnyQuery = ecez.Query(
+        struct {
+            pos: *Position,
+            spinny: *const Spinny,
+        },
+        .{},
+        .{},
+    );
+    pub fn updateSpinny(spinny_query: *UpdateSpinnyQuery, event_arg: UpdateEventArgument) void {
+        while (spinny_query.next()) |spin| {
+            const circle_x: f32 = @floatCast(std.math.sin(event_arg.total_time + spin.spinny.offset));
+            const cicler_y: f32 = @floatCast(std.math.cos(event_arg.total_time + spin.spinny.offset));
+
+            spin.pos.value = rl.Vector2{
+                .x = circle_x * spin.spinny.radius + (event_arg.frame_dim.x * 0.5 - 100),
+                .y = cicler_y * spin.spinny.radius + (event_arg.frame_dim.y * 0.5 - 100),
+            };
+        }
+    }
 };
 
 pub const Storage = ecez.CreateStorage(components);
+
+pub const Scheduler = ecez.CreateScheduler(.{
+    ecez.Event(
+        "update",
+        .{
+            systems.updateSpinny,
+        },
+        .{},
+    ),
+});
 
 pub fn main() anyerror!void {
     var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
@@ -43,6 +92,14 @@ pub fn main() anyerror!void {
     const allocator = gpa.allocator();
 
     var storage = try Storage.init(allocator);
+    defer storage.deinit();
+
+    var scheduler = try Scheduler.init(.{
+        .pool_allocator = allocator,
+        .query_submit_allocator = allocator,
+        .thread_count = null,
+    });
+    defer scheduler.deinit();
 
     // Get a random screen res for testing
     const screen_dim = screen_dim_blk: {
@@ -86,13 +143,28 @@ pub fn main() anyerror!void {
     }
 
     // Main game loop
+
     var request_close: bool = false;
     while (!rl.windowShouldClose() and !request_close) { // Detect window close button or ESC key
+        const total_time = rl.getTime();
+        const delta_time = rl.getFrameTime();
+
         rl.beginDrawing();
         defer rl.endDrawing();
 
         const current_game_view = try scene_editor.draw(allocator, Storage, &storage, &request_close);
         try game_view.rescaleGameView(current_game_view);
+
+        try scheduler.dispatchEvent(&storage, .update, UpdateEventArgument{
+            .delta_time = delta_time,
+            .total_time = total_time,
+            .frame_dim = rl.Vector2{
+                .x = @floatFromInt(current_game_view[2]),
+                .y = @floatFromInt(current_game_view[3]),
+            },
+        });
+
+        scheduler.waitEvent(.update);
 
         // Start drawing game
         {
@@ -100,7 +172,24 @@ pub fn main() anyerror!void {
             defer game_view.endRendering();
 
             // !!Game graphics here!!
-            rl.drawText("game view", 0, 0, 20, .light_gray);
+            const SpinnyDrawQuery = ecez.Query(
+                struct {
+                    pos: Position,
+                },
+                .{Spinny},
+                .{},
+            );
+            var spinny_iter = try SpinnyDrawQuery.submit(allocator, &storage);
+            defer spinny_iter.deinit(allocator);
+            while (spinny_iter.next()) |spinny| {
+                rl.drawText(
+                    "game view",
+                    @intFromFloat(spinny.pos.value.x),
+                    @intFromFloat(spinny.pos.value.y),
+                    20,
+                    .light_gray,
+                );
+            }
         }
 
         game_view.present(rl.Rectangle{
