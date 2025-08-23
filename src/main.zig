@@ -39,7 +39,7 @@ pub const Position = struct {
 };
 
 pub const components = .{
-    SceneEditor.components.EditorInfo,
+    SceneEditor.components.EntityInfo,
     TestComponent,
     A,
     Spinny,

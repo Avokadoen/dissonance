@@ -5,12 +5,14 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
-pub const components = @import("scene_editor/components.zig");
 const EntityInspector = @import("scene_editor/EntityInspector.zig");
 const EntityList = @import("scene_editor/EntityList.zig");
 const layout_config = @import("scene_editor/layout_config.zig");
 const Toolbar = @import("scene_editor/Toolbar.zig");
 
+pub const components = struct {
+    pub const EntityInfo = @import("scene_editor/EntityInfo.zig");
+};
 const SceneEditor = @This();
 
 pub const init = SceneEditor{

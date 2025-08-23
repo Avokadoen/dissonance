@@ -5,7 +5,7 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
-const components = @import("components.zig");
+const EntityInfo = @import("EntityInfo.zig");
 const layout_config = @import("layout_config.zig");
 const reflection = @import("reflection.zig");
 
@@ -216,7 +216,7 @@ pub fn draw(
                     button_bound.x += button_bound.width + layout_config.EntityInspector.spacing;
                 }
 
-                if (Component != components.EditorInfo) {
+                if (Component != EntityInfo) {
                     const tool_tip_str = std.fmt.comptimePrint("Delete {s} from entity", .{component_name});
                     rgui.setTooltip(tool_tip_str);
                     const delete_txt = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.bin)});

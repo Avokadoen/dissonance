@@ -5,7 +5,7 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
-const components = @import("components.zig");
+const EntityInfo = @import("EntityInfo.zig");
 const layout_config = @import("layout_config.zig");
 const queries = @import("queries.zig");
 
@@ -112,7 +112,7 @@ pub fn draw(
             rgui.setTooltip("New entity");
             const create_entity_txt = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.file_add)});
             if (rgui.button(button_bound, create_entity_txt)) {
-                const new_entity_info = components.EditorInfo.init("new entity");
+                const new_entity_info = EntityInfo.init("new entity");
                 selected_entity.* = try storage.createEntity(.{new_entity_info});
             }
             button_bound.x += layout_config.EntityList.spacing + button_bound.width;
@@ -177,7 +177,7 @@ pub fn draw(
         const searchbar_ptr: [*:0]u8 = @ptrCast(&entity_list.searchbar_str);
         const searchbar_slice = std.mem.span(searchbar_ptr);
 
-        var info_query = try queries.EditorInfo.submit(allocator, storage);
+        var info_query = try queries.EntityInfoQuery.submit(allocator, storage);
         defer info_query.deinit(allocator);
         while (info_query.next()) |entity| {
             if (searchbar_slice.len > 0) {
