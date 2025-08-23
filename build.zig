@@ -51,6 +51,8 @@ pub fn build(b: *std.Build) void {
         const ecez = b.dependency("ecez", .{
             .enable_ztracy = options.enable_ztracy,
             .enable_ecez_dev_markers = options.enable_ecez_dev_markers,
+            .enable_fibers = false,
+            .on_demand = false,
         });
         const ecez_module = ecez.module("ecez");
 
@@ -58,8 +60,10 @@ pub fn build(b: *std.Build) void {
 
         const ztracy_dep = ecez.builder.dependency("ztracy", .{
             .enable_ztracy = options.enable_ztracy,
+            .enable_fibers = false,
+            .on_demand = false,
         });
-        const ztracy_module = ztracy_dep.module("root");
+        const ztracy_module = ztracy_dep.module("root"); // ecez_module.import_table.get("ztracy").?;
 
         exe.root_module.addImport("ztracy", ztracy_module);
 

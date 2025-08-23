@@ -4,6 +4,7 @@ const builtin = @import("builtin");
 const ecez = @import("ecez");
 const rgui = @import("raygui");
 const rl = @import("raylib");
+const tracy = @import("ztracy");
 
 const GameView = @import("GameView.zig");
 const SceneEditor = @import("SceneEditor.zig");
@@ -134,6 +135,8 @@ pub fn main() anyerror!void {
     var total_time: f64 = 0;
     var request_close: bool = false;
     while (!rl.windowShouldClose() and !request_close) { // Detect window close button or ESC key
+        tracy.FrameMark();
+
         const delta_time = rl.getFrameTime();
 
         rl.beginDrawing();
@@ -143,6 +146,9 @@ pub fn main() anyerror!void {
         try game_view.rescaleGameView(current_game_view);
 
         if (scene_editor.isGamePaused() == false) {
+            const game_update_zone = tracy.ZoneN(@src(), "game_update");
+            defer game_update_zone.End();
+
             total_time += delta_time;
 
             try scheduler.dispatchEvent(&storage, .update, UpdateEventArgument{
@@ -158,6 +164,9 @@ pub fn main() anyerror!void {
 
         // Start drawing game
         {
+            const game_update_zone = tracy.ZoneN(@src(), "game_draw");
+            defer game_update_zone.End();
+
             game_view.beginRendering();
             defer game_view.endRendering();
 

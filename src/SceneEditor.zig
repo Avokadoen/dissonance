@@ -3,6 +3,7 @@ const std = @import("std");
 const ecez = @import("ecez");
 const rgui = @import("raygui");
 const rl = @import("raylib");
+const tracy = @import("ztracy");
 
 pub const components = @import("scene_editor/components.zig");
 const EntityInspector = @import("scene_editor/EntityInspector.zig");
@@ -31,6 +32,9 @@ pub fn draw(
     storage: *Storage,
     request_close: *bool,
 ) ![4]u32 {
+    const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
+    defer zone.End();
+
     const style = rgui.getStyle(.default, .{ .default = .background_color });
     rl.clearBackground(rl.getColor(style));
 

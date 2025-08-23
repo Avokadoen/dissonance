@@ -3,6 +3,7 @@ const std = @import("std");
 const ecez = @import("ecez");
 const rgui = @import("raygui");
 const rl = @import("raylib");
+const tracy = @import("ztracy");
 
 const components = @import("components.zig");
 const layout_config = @import("layout_config.zig");
@@ -30,6 +31,9 @@ pub fn draw(
     storage: *Storage,
     selected_entity: *?ecez.Entity,
 ) !void {
+    const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
+    defer zone.End();
+
     const r_height = rl.getRenderHeight();
 
     rgui.setStyle(.listview, .{ .listview = .scrollbar_side }, rgui.scrollbar_left_side);

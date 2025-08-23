@@ -4,6 +4,7 @@ const ecez = @import("ecez");
 const DrawError = ecez.ezby.DeserializeError;
 const rgui = @import("raygui");
 const rl = @import("raylib");
+const tracy = @import("ztracy");
 
 const layout_config = @import("layout_config.zig");
 
@@ -56,6 +57,9 @@ pub fn draw(
     storage: *Storage,
     request_close: *bool,
 ) !void {
+    const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
+    defer zone.End();
+
     if (toolbar.panel_open != .none) {
         rgui.lock();
     }
