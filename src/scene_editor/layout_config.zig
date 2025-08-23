@@ -20,7 +20,7 @@ pub const Toolbar = struct {
 pub const EntityList = struct {
     pub const spacing = 15;
     pub const y_base_position = 80;
-    pub const width = 170;
+    pub const width = 200;
     pub const entity_entry_padding = 20;
     pub const button_dim = 20;
 };
