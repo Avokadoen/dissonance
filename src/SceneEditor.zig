@@ -85,6 +85,10 @@ pub fn draw(
     };
 }
 
+pub fn panelDraw(scene_editor: *SceneEditor, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
+    try scene_editor.toolbar.panelDraw(allocator, Storage, storage);
+}
+
 pub fn isGamePaused(scene_editor: SceneEditor) bool {
     return scene_editor.toolbar.game_loop_state != .play;
 }

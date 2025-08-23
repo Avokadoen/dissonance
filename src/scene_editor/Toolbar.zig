@@ -111,9 +111,7 @@ pub fn draw(
             .pause => toolbar.game_loop_state = .play,
             .stop => {
                 std.debug.assert(toolbar.game_loop_ezby_bytes == null);
-
-                // TODO: save to file as backup.ezby to be able to recover from game crash!!!
-                toolbar.game_loop_ezby_bytes = try ecez.ezby.serialize(allocator, Storage, storage.*, .{});
+                toolbar.game_loop_ezby_bytes = try saveScene("play_backup.ezby", allocator, Storage, storage);
 
                 toolbar.game_loop_state = .play;
             },
@@ -164,7 +162,9 @@ pub fn draw(
     if (toolbar.panel_open != .none) {
         rgui.unlock();
     }
+}
 
+pub fn panelDraw(toolbar: *Toolbar, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
     try switch (toolbar.panel_open) {
         .none => {},
         .save => saveOrLoadUi(.save, toolbar, allocator, Storage, storage),
@@ -254,7 +254,8 @@ fn saveOrLoadUi(comptime op: enum { save, load }, toolbar: *Toolbar, allocator: 
             // Currently you can call the file anything, but lets atleast avoid crashing by enforcing some length :)
             if (scene_name.len > "X.ezby".len) {
                 if (op == .save) {
-                    try saveScene(scene_name, allocator, Storage, storage);
+                    const bytes = try saveScene(scene_name, allocator, Storage, storage);
+                    allocator.free(bytes);
                 } else {
                     try loadScene(toolbar.load_op, scene_name, allocator, Storage, storage);
                 }
@@ -264,9 +265,8 @@ fn saveOrLoadUi(comptime op: enum { save, load }, toolbar: *Toolbar, allocator: 
     }
 }
 
-fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
+fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) ![]const u8 {
     const bytes = try ecez.ezby.serialize(allocator, Storage, storage.*, .{});
-    defer allocator.free(bytes);
 
     const dir_path = try std.fs.selfExeDirPathAlloc(allocator);
     defer allocator.free(dir_path);
@@ -278,6 +278,8 @@ fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Stor
     defer scenes_dir.close();
 
     try scenes_dir.writeFile(.{ .sub_path = scene_name, .data = bytes });
+
+    return bytes;
 }
 
 fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {

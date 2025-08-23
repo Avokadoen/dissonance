@@ -188,5 +188,7 @@ pub fn main() anyerror!void {
             .width = @floatFromInt(current_game_view[2]),
             .height = @floatFromInt(current_game_view[3]),
         });
+
+        try scene_editor.panelDraw(allocator, Storage, &storage);
     }
 }
