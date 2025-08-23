@@ -253,13 +253,20 @@ fn saveOrLoadUi(comptime op: enum { save, load }, toolbar: *Toolbar, allocator: 
 
             // Currently you can call the file anything, but lets atleast avoid crashing by enforcing some length :)
             if (scene_name.len > "X.ezby".len) {
+                toolbar.panel_open = .none;
+
                 if (op == .save) {
                     const bytes = try saveScene(scene_name, allocator, Storage, storage);
                     allocator.free(bytes);
                 } else {
-                    try loadScene(toolbar.load_op, scene_name, allocator, Storage, storage);
+                    loadScene(toolbar.load_op, scene_name, allocator, Storage, storage) catch |err| {
+                        switch (err) {
+                            // User most likely typed an invalid scene name
+                            error.InvalidSceneName => toolbar.panel_open = .load,
+                            else => return err,
+                        }
+                    };
                 }
-                toolbar.panel_open = .none;
             }
         }
     }
@@ -292,7 +299,7 @@ fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std
     var scenes_dir = try dir.makeOpenPath("scenes", .{ .access_sub_paths = true });
     defer scenes_dir.close();
 
-    const scene_file = try scenes_dir.openFile(scene_name, .{});
+    const scene_file = scenes_dir.openFile(scene_name, .{}) catch return error.InvalidSceneName;
     defer scene_file.close();
 
     const ezby_scene = try scene_file.readToEndAlloc(allocator, std.math.pow(usize, 1024, 3) * 256);
