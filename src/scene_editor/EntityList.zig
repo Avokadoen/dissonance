@@ -148,7 +148,7 @@ pub fn draw(
             }
             button_bound.x += layout_config.EntityList.spacing + button_bound.width;
 
-            rgui.setTooltip("Pase entity from clipboard");
+            rgui.setTooltip("Paste entity from clipboard");
             const paste_entity_txt = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.file_paste)});
             if (rgui.button(button_bound, paste_entity_txt)) {
                 if (entity_list.entity_copy_bytes) |ezby_bytes| {
