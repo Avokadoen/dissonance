@@ -85,6 +85,11 @@ pub fn draw(
     };
 }
 
+pub fn isGamePaused(scene_editor: SceneEditor) bool {
+    return scene_editor.toolbar.game_loop_state != .play;
+}
+
 pub fn deinit(scene_editor: *SceneEditor, allocator: std.mem.Allocator) void {
     scene_editor.entity_list.deinit(allocator);
+    scene_editor.toolbar.deinit(allocator);
 }

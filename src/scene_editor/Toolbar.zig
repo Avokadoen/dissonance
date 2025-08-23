@@ -16,6 +16,14 @@ pub const init = Toolbar{
     .load_op_edit_mode = false,
     .render_entity_list = true,
     .render_entity_inspector = true,
+    .game_loop_state = .stop,
+    .game_loop_ezby_bytes = null,
+};
+
+pub const GameloopState = enum {
+    stop,
+    play,
+    pause,
 };
 
 const Panel = enum {
@@ -31,6 +39,15 @@ load_op_edit_mode: bool,
 
 render_entity_list: bool,
 render_entity_inspector: bool,
+
+game_loop_state: GameloopState,
+game_loop_ezby_bytes: ?[]const u8,
+
+pub fn deinit(toolbar: *Toolbar, allocator: std.mem.Allocator) void {
+    if (toolbar.game_loop_ezby_bytes) |ezby_bytes| {
+        allocator.free(ezby_bytes);
+    }
+}
 
 pub fn draw(
     toolbar: *Toolbar,
@@ -79,7 +96,48 @@ pub fn draw(
         toolbar.load_op = .overwrite;
         toolbar.load_op_edit_mode = false;
     }
+
+    button_bounds.x = (r_width * 0.5) - ((layout_config.Toolbar.button_dim + layout_config.Toolbar.button_padding) * 2);
+    const play_pause_tooltip = if (toolbar.game_loop_state == .play) "Pause" else "Play";
+    rgui.setTooltip(play_pause_tooltip);
+    button_bounds.x += (layout_config.Toolbar.button_dim + layout_config.Toolbar.button_padding);
+
+    const play = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.player_play)});
+    const pause = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.player_pause)});
+    const play_pause = if (toolbar.game_loop_state == .play) pause else play;
+    if (rgui.button(button_bounds, play_pause)) {
+        switch (toolbar.game_loop_state) {
+            .play => toolbar.game_loop_state = .pause,
+            .pause => toolbar.game_loop_state = .play,
+            .stop => {
+                std.debug.assert(toolbar.game_loop_ezby_bytes == null);
+
+                // TODO: save to file as backup.ezby to be able to recover from game crash!!!
+                toolbar.game_loop_ezby_bytes = try ecez.ezby.serialize(allocator, Storage, storage.*, .{});
+
+                toolbar.game_loop_state = .play;
+            },
+        }
+    }
+
+    rgui.setTooltip("Stop");
     button_bounds.x += layout_config.Toolbar.button_dim + layout_config.Toolbar.button_padding;
+    const stop = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.player_stop)});
+    if (rgui.button(button_bounds, stop)) {
+        switch (toolbar.game_loop_state) {
+            .play, .pause => {
+                // Load serialized storage state
+                if (toolbar.game_loop_ezby_bytes) |ezby_bytes| {
+                    try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_bytes);
+                    toolbar.game_loop_ezby_bytes = null;
+                    allocator.free(ezby_bytes);
+                }
+
+                toolbar.game_loop_state = .stop;
+            },
+            .stop => {},
+        }
+    }
 
     rgui.setTooltip("Close app");
     button_bounds.x = r_width - (layout_config.Toolbar.button_dim + layout_config.Toolbar.button_padding);

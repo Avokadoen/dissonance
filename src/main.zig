@@ -144,9 +144,9 @@ pub fn main() anyerror!void {
 
     // Main game loop
 
+    var total_time: f64 = 0;
     var request_close: bool = false;
     while (!rl.windowShouldClose() and !request_close) { // Detect window close button or ESC key
-        const total_time = rl.getTime();
         const delta_time = rl.getFrameTime();
 
         rl.beginDrawing();
@@ -155,16 +155,19 @@ pub fn main() anyerror!void {
         const current_game_view = try scene_editor.draw(allocator, Storage, &storage, &request_close);
         try game_view.rescaleGameView(current_game_view);
 
-        try scheduler.dispatchEvent(&storage, .update, UpdateEventArgument{
-            .delta_time = delta_time,
-            .total_time = total_time,
-            .frame_dim = rl.Vector2{
-                .x = @floatFromInt(current_game_view[2]),
-                .y = @floatFromInt(current_game_view[3]),
-            },
-        });
+        if (scene_editor.isGamePaused() == false) {
+            total_time += delta_time;
 
-        scheduler.waitEvent(.update);
+            try scheduler.dispatchEvent(&storage, .update, UpdateEventArgument{
+                .delta_time = delta_time,
+                .total_time = total_time,
+                .frame_dim = rl.Vector2{
+                    .x = @floatFromInt(current_game_view[2]),
+                    .y = @floatFromInt(current_game_view[3]),
+                },
+            });
+            scheduler.waitEvent(.update);
+        }
 
         // Start drawing game
         {
