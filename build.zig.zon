@@ -1,0 +1,24 @@
+.{
+    .name = .dissonance,
+    .version = "0.0.0",
+    .fingerprint = 0x5962081a17c92315, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.14.1",
+    .dependencies = .{
+        .raylib_zig = .{
+            .url = "git+https://github.com/Avokadoen/raylib-zig?ref=devel#fd9dd9eea28c71a4711d72519951670b76824ad0",
+            .hash = "raylib_zig-5.6.0-dev-KE8REOw6BQCS17I0r25JNYq9ndoRGiTYSjz2yC4ymrSg",
+        },
+        .ecez = .{
+            .url = "git+https://github.com/Avokadoen/ecez#85f50eced3dd2a0d1359aba3b7872767478b61fc",
+            .hash = "ecez-0.0.0-X-dkoI0DBgAJjYg2DBcS4iVQxtbUF1Bmt7NuLrTyANjG",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        // For example...
+        //"LICENSE",
+        //"README.md",
+    },
+}

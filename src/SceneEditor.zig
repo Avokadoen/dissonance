@@ -1,0 +1,86 @@
+const std = @import("std");
+
+const ecez = @import("ecez");
+const rgui = @import("raygui");
+const rl = @import("raylib");
+
+pub const components = @import("scene_editor/components.zig");
+const EntityInspector = @import("scene_editor/EntityInspector.zig");
+const EntityList = @import("scene_editor/EntityList.zig");
+const layout_config = @import("scene_editor/layout_config.zig");
+const Toolbar = @import("scene_editor/Toolbar.zig");
+
+const SceneEditor = @This();
+
+pub const init = SceneEditor{
+    .toolbar = .init,
+    .entity_list = .init,
+    .entity_inspector = .init,
+    .selected_entity = null,
+};
+
+toolbar: Toolbar,
+entity_list: EntityList,
+entity_inspector: EntityInspector,
+
+selected_entity: ?ecez.Entity,
+
+pub fn draw(
+    scene_editor: *SceneEditor,
+    allocator: std.mem.Allocator,
+    comptime Storage: type,
+    storage: *Storage,
+    request_close: *bool,
+) ![4]u32 {
+    const style = rgui.getStyle(.default, .{ .default = .background_color });
+    rl.clearBackground(rl.getColor(style));
+
+    if (scene_editor.toolbar.panel_open != .none) {
+        rgui.lock();
+    }
+
+    // Draw entity list
+    try scene_editor.entity_list.draw(
+        allocator,
+        Storage,
+        storage,
+        &scene_editor.selected_entity,
+    );
+
+    // Draw entity inspector
+    try scene_editor.entity_inspector.draw(
+        allocator,
+        Storage,
+        storage,
+        &scene_editor.selected_entity,
+    );
+
+    if (scene_editor.toolbar.panel_open != .none) {
+        rgui.unlock();
+    }
+
+    // Draw toolbar
+    try scene_editor.toolbar.draw(allocator, Storage, storage, request_close);
+
+    // Draw asset view
+    // TODO (show 3D models, audio ...)
+
+    const r_width: u32 = @intCast(rl.getRenderWidth());
+    const r_height: u32 = @intCast(rl.getRenderHeight());
+
+    const x = layout_config.EntityList.width;
+    const y = layout_config.Toolbar.height;
+    const width = r_width - (x + layout_config.EntityInspector.width);
+    const height = r_height - y;
+    // TODO: proper type
+    return [4]u32{
+        x,
+        y,
+        width,
+        height,
+    };
+}
+
+pub fn deinit(scene_editor: *SceneEditor, allocator: std.mem.Allocator) void {
+    scene_editor.entity_list.deinit(allocator);
+}
