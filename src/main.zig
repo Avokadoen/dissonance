@@ -102,25 +102,23 @@ pub fn main() anyerror!void {
     defer scheduler.deinit();
 
     // Get a random screen res for testing
-    const screen_dim = screen_dim_blk: {
-        const screen_dims = [_][2]i32{
-            .{ 800, 450 },
-            .{ 1280, 720 },
-            .{ 1400, 1000 },
-            .{ 1920, 1080 },
-            .{ 2560, 1420 },
-        };
-        var xoshiro = std.Random.Xoshiro256.init(@intCast(std.time.milliTimestamp()));
-        const screen_index = std.Random.intRangeLessThan(xoshiro.random(), u8, 0, screen_dims.len);
-
-        break :screen_dim_blk screen_dims[screen_index];
-    };
+    const screen_dim = [2]i32{ 1280, 720 };
 
     const log_level: rl.TraceLogLevel = if (builtin.mode == .Debug) .warning else .err;
     rl.setTraceLogLevel(log_level);
 
-    rl.initWindow(screen_dim[0], screen_dim[1], window_title);
+    rl.setConfigFlags(.{ .window_resizable = true });
+    rl.initWindow(
+        screen_dim[0],
+        screen_dim[1],
+        window_title,
+    );
     defer rl.closeWindow(); // Close window and OpenGL context
+
+    // HACK: seems there is a bug in raylib with initalizaing the window.
+    // Rendering and events are not synced on where things are place. By resizing
+    // the windows AFTER init it seems to work fine however.
+    rl.setWindowState(.{ .window_maximized = true });
 
     // rl.setExitKey(.null); // Dont want accidental quitting app while editing!
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
