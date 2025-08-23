@@ -156,12 +156,13 @@ pub fn draw(
                 }
             }
 
+            const edit_mode = rl.checkCollisionPointRec(rl.getMousePosition(), searchbar_bound);
             _ = rgui.label(searchbar_label_bound, "Entity name search:");
             _ = rgui.textBox(
                 searchbar_bound,
                 entity_list.searchbar_str[0 .. entity_list.searchbar_str.len - 1 :0],
                 entity_list.searchbar_str.len,
-                true,
+                edit_mode,
             );
 
             _ = rgui.line(line_bound, "");
