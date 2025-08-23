@@ -38,7 +38,10 @@ pub const Storage = ecez.CreateStorage(components);
 
 pub fn main() anyerror!void {
     var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    defer _ = gpa.deinit();
+
     const allocator = gpa.allocator();
+
     var storage = try Storage.init(allocator);
 
     // Get a random screen res for testing
