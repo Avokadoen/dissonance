@@ -14,6 +14,8 @@ pub const init = Toolbar{
     .panel_open = .none,
     .load_op = .overwrite,
     .load_op_edit_mode = false,
+    .render_entity_list = true,
+    .render_entity_inspector = true,
 };
 
 const Panel = enum {
@@ -27,6 +29,9 @@ panel_open: Panel,
 load_op: ecez.ezby.DeserializeOp,
 load_op_edit_mode: bool,
 
+render_entity_list: bool,
+render_entity_inspector: bool,
+
 pub fn draw(
     toolbar: *Toolbar,
     allocator: std.mem.Allocator,
@@ -39,8 +44,6 @@ pub fn draw(
     }
 
     const r_width: f32 = @floatFromInt(rl.getRenderWidth());
-    const r_height: f32 = @floatFromInt(rl.getRenderHeight());
-    _ = r_height; // autofix
 
     const panel_bounds = rl.Rectangle{
         .x = 0,
@@ -84,6 +87,20 @@ pub fn draw(
     if (rgui.button(button_bounds, close_app)) {
         // TODO: open popup to double check if this was desired?
         request_close.* = true;
+    }
+
+    rgui.setTooltip("Render entity inspector");
+    button_bounds.x -= (layout_config.Toolbar.button_dim + layout_config.Toolbar.button_padding) * 4;
+    const entity_inspector = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.cube)});
+    if (rgui.button(button_bounds, entity_inspector)) {
+        toolbar.render_entity_inspector = !toolbar.render_entity_inspector;
+    }
+
+    rgui.setTooltip("Render entity list");
+    button_bounds.x -= layout_config.Toolbar.button_dim + layout_config.Toolbar.button_padding;
+    const entity_list = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.box_grid)});
+    if (rgui.button(button_bounds, entity_list)) {
+        toolbar.render_entity_list = !toolbar.render_entity_list;
     }
 
     if (toolbar.panel_open != .none) {

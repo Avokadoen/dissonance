@@ -22,7 +22,6 @@ pub const init = SceneEditor{
 toolbar: Toolbar,
 entity_list: EntityList,
 entity_inspector: EntityInspector,
-
 selected_entity: ?ecez.Entity,
 
 pub fn draw(
@@ -40,20 +39,24 @@ pub fn draw(
     }
 
     // Draw entity list
-    try scene_editor.entity_list.draw(
-        allocator,
-        Storage,
-        storage,
-        &scene_editor.selected_entity,
-    );
+    if (scene_editor.toolbar.render_entity_list) {
+        try scene_editor.entity_list.draw(
+            allocator,
+            Storage,
+            storage,
+            &scene_editor.selected_entity,
+        );
+    }
 
     // Draw entity inspector
-    try scene_editor.entity_inspector.draw(
-        allocator,
-        Storage,
-        storage,
-        &scene_editor.selected_entity,
-    );
+    if (scene_editor.toolbar.render_entity_inspector) {
+        try scene_editor.entity_inspector.draw(
+            allocator,
+            Storage,
+            storage,
+            &scene_editor.selected_entity,
+        );
+    }
 
     if (scene_editor.toolbar.panel_open != .none) {
         rgui.unlock();
@@ -68,10 +71,12 @@ pub fn draw(
     const r_width: u32 = @intCast(rl.getRenderWidth());
     const r_height: u32 = @intCast(rl.getRenderHeight());
 
-    const x = layout_config.EntityList.width;
-    const y = layout_config.Toolbar.height;
-    const width = r_width - (x + layout_config.EntityInspector.width);
-    const height = r_height - y;
+    const x: u32 = if (scene_editor.toolbar.render_entity_list) layout_config.EntityList.width else 0;
+    const y: u32 = layout_config.Toolbar.height;
+
+    const width_offset: u32 = if (scene_editor.toolbar.render_entity_inspector) layout_config.EntityInspector.width else 0;
+    const width: u32 = r_width - (x + width_offset);
+    const height: u32 = r_height - y;
     // TODO: proper type
     return [4]u32{
         x,
