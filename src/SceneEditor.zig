@@ -51,7 +51,6 @@ pub fn draw(
     // Draw entity inspector
     if (scene_editor.toolbar.render_entity_inspector) {
         try scene_editor.entity_inspector.draw(
-            allocator,
             Storage,
             storage,
             &scene_editor.selected_entity,

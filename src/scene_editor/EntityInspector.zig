@@ -36,12 +36,10 @@ fake_clipboard: [1024]u8,
 
 pub fn draw(
     entity_inspector: *EntityInspector,
-    allocator: std.mem.Allocator,
     comptime Storage: type,
     storage: *Storage,
     maybe_selected_entity: *?ecez.Entity,
 ) !void {
-    _ = allocator; // autofix
     const r_width = rl.getRenderWidth();
     const r_height = rl.getRenderHeight();
 
