@@ -165,10 +165,10 @@ pub fn draw(
             const requested_component = component_index_map[@intCast(entity_inspector.add_component_selected - 1)];
             inline for (Storage.component_type_array, 0..) |Component, comp_index| {
                 if (requested_component == comp_index and storage.hasComponents(selected_entity, .{Component}) == false) {
-                    // allow ourself to set component as undefined, user can define component values in editor
-                    @setRuntimeSafety(false);
-                    const undef_comp: Component = undefined;
-                    try storage.setComponents(selected_entity, .{undef_comp});
+                    // TODO: this may crash if running the editor in release, should @memset(0) instead of undefined!
+                    // Respect default values, otherwise use undefined
+                    const inital_comp: Component = if (comptime reflection.componentHasDefaults(Component)) .{} else undefined;
+                    try storage.setComponents(selected_entity, .{inital_comp});
 
                     entity_inspector.hovering_component_dropdown = false;
                     entity_inspector.add_component_selected = 0;

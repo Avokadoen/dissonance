@@ -237,3 +237,17 @@ pub fn componentName(comptime Component: type) [:0]const u8 {
     }
     return last_name_section[0.. :0];
 }
+
+pub fn componentHasDefaults(comptime Component: type) bool {
+    if (@inComptime() == false) {
+        @compileError("calling " ++ @src().fn_name ++ " on runtime is illegal (use comptime)");
+    }
+
+    inline for (@typeInfo(Component).@"struct".fields) |field| {
+        if (field.default_value_ptr == null) {
+            return false;
+        }
+    }
+
+    return true;
+}
