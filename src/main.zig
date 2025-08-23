@@ -29,7 +29,7 @@ pub const TestComponent = struct {
 pub const A = struct {};
 
 pub const Spinny = struct {
-    offset: f64 = 0,
+    ring_offset: f64 = 0,
     radius: f32 = 100,
 };
 
@@ -62,8 +62,8 @@ pub const systems = struct {
     );
     pub fn updateSpinny(spinny_query: *UpdateSpinnyQuery, event_arg: UpdateEventArgument) void {
         while (spinny_query.next()) |spin| {
-            const circle_x: f32 = @floatCast(std.math.sin(event_arg.total_time + spin.spinny.offset));
-            const cicler_y: f32 = @floatCast(std.math.cos(event_arg.total_time + spin.spinny.offset));
+            const circle_x: f32 = @floatCast(std.math.sin(event_arg.total_time + spin.spinny.ring_offset));
+            const cicler_y: f32 = @floatCast(std.math.cos(event_arg.total_time + spin.spinny.ring_offset));
 
             spin.pos.value = rl.Vector2{
                 .x = circle_x * spin.spinny.radius + (event_arg.frame_dim.x * 0.5 - 100),
