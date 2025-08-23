@@ -32,6 +32,9 @@ pub fn rescaleGameView(game_view: *GameView, current_view: [4]u32) !void {
 
 pub fn beginRendering(game_view: *GameView) void {
     rl.beginTextureMode(game_view.render);
+
+    // TODO: not needed when rendering fully
+    rl.clearBackground(rl.Color.ray_white);
 }
 
 pub fn endRendering(game_view: *GameView) void {
