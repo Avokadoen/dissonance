@@ -10,6 +10,7 @@ const Box2DRT = @import("Box2DRT.zig");
 const GameView = @import("GameView.zig");
 const SceneEditor = @import("SceneEditor.zig");
 const dark_style = @import("styling/dark.zig");
+const UpdateEventArgument = @import("common.zig").UpdateEventArgument;
 
 const window_title = "dissonance";
 
@@ -46,26 +47,17 @@ pub const components = .{
     Box2DRT.components.StaticTag,
 };
 
-pub const UpdateEventArgument = struct {
-    total_time: f64,
-    delta_time: f32,
-    frame_dim: rl.Vector2,
-    box2d_rt: Box2DRT,
-};
-
 pub const systems = struct {};
 
 pub const Storage = ecez.CreateStorage(components);
-
-pub const Box2DSystems = Box2DRT.CreateSystems(Storage);
 
 pub const Scheduler = ecez.CreateScheduler(.{
     ecez.Event(
         "update",
         .{
-            Box2DSystems.doBox2DStep,
-            Box2DSystems.propagateBox2DPosition,
-            Box2DSystems.propagateBox2DRotation,
+            Box2DRT.systems.doBox2DStep,
+            Box2DRT.systems.propagateBox2DPosition,
+            Box2DRT.systems.propagateBox2DRotation,
         },
         .{},
     ),
