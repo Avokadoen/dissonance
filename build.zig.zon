@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.14.1",
     .dependencies = .{
         .raylib_zig = .{
-            .url = "git+https://github.com/Avokadoen/raylib-zig#5f78b68d1d5f33137985d3a3050a9df64145e915",
-            .hash = "raylib_zig-5.6.0-dev-KE8REJU7BQDpNpu64NmTF1mebnN1rO7E0L0wpuPNQQyq",
+            .url = "git+https://github.com/Avokadoen/raylib-zig#da1f870d0f5dea7b695f38eb84f648253d2cb4a8",
+            .hash = "raylib_zig-5.6.0-dev-KE8REJc7BQBtj8XKStJBtSPTck7oXEU17KLEde3gB6Y9",
         },
         .ecez = .{
             .url = "git+https://github.com/Avokadoen/ecez#85f50eced3dd2a0d1359aba3b7872767478b61fc",
