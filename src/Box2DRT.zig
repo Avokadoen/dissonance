@@ -151,8 +151,8 @@ pub fn CreateSystems(comptime Storage: type) type {
                 const p = box2d_c.b2Body_GetWorldPoint(
                     entity.box.body_id,
                     box2d_c.b2Vec2{
-                        .x = -entity.box.extent.x,
-                        .y = -entity.box.extent.y,
+                        .x = 0,
+                        .y = 0,
                     },
                 );
                 entity.position.value = rl.Vector2{
@@ -165,7 +165,7 @@ pub fn CreateSystems(comptime Storage: type) type {
 }
 
 pub const Config = struct {
-    length_units_per_meter: f32 = 128.0,
+    length_units_per_meter: f32 = 512.0,
     gravity: f32 = 9.8,
     substeps: c_int = 4,
 };
