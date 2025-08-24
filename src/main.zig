@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 const ecez = @import("ecez");
 const rgui = @import("raygui");
 const rl = @import("raylib");
-const tracy = @import("ztracy");
+const ztracy = @import("ztracy");
 
 const Box2DRT = @import("Box2DRT.zig");
 const GameView = @import("GameView.zig");
@@ -69,6 +69,15 @@ pub const Scheduler = ecez.CreateScheduler(.{
         },
         .{},
     ),
+    ecez.Event(
+        "draw",
+        .{
+            coliderDraw,
+        },
+        .{
+            .run_on_main_thread = true,
+        },
+    ),
 });
 
 pub fn main() anyerror!void {
@@ -131,13 +140,16 @@ pub fn main() anyerror!void {
         @intCast(rl.getRenderWidth()),
         @intCast(rl.getRenderHeight()),
     };
+
+    var player_position: rl.Vector2 = .{ .x = screen_dim[0] / 2, .y = screen_dim[0] / 2 };
+
     while (!rl.windowShouldClose() and !request_close) { // Detect window close button or ESC key
-        tracy.FrameMark();
+        ztracy.FrameMark();
 
         const delta_time = rl.getFrameTime();
-
+        player_position = playerMovement(player_position);
         if (scene_editor.isGamePaused() == false) {
-            const game_update_zone = tracy.ZoneN(@src(), "game_update");
+            const game_update_zone = ztracy.ZoneN(@src(), "game_update");
             defer game_update_zone.End();
 
             total_time += delta_time;
@@ -156,13 +168,14 @@ pub fn main() anyerror!void {
 
         // Start drawing game
         {
-            const game_update_zone = tracy.ZoneN(@src(), "game_draw");
+            const game_update_zone = ztracy.ZoneN(@src(), "game_draw");
             defer game_update_zone.End();
 
             game_view.beginRendering();
             defer game_view.endRendering();
 
             // !!Game graphics here!!
+            try scheduler.dispatchEvent(&storage, .draw, .{});
         }
 
         game_view.present(rl.Rectangle{
@@ -171,6 +184,8 @@ pub fn main() anyerror!void {
             .width = @floatFromInt(current_game_view[2]),
             .height = @floatFromInt(current_game_view[3]),
         });
+
+        rl.drawCircleV(player_position, 20, .gold);
 
         rl.beginDrawing();
         defer rl.endDrawing();
@@ -186,6 +201,54 @@ pub fn main() anyerror!void {
 
         try scene_editor.panelDraw(allocator, Storage, &storage, &box2d_rt);
     }
+}
+
+pub const ColliderDrawQuery = ecez.Query(
+    struct {
+        rotation: *const Box2DRT.components.Rotation,
+        box: *const Box2DRT.components.BoxCollider,
+        position: *const Box2DRT.components.Position,
+    },
+    .{},
+    .{},
+);
+pub fn coliderDraw(collider_query: *ColliderDrawQuery) void {
+    const zone = ztracy.ZoneN(@src(), @src().fn_name);
+    defer zone.End();
+
+    while (collider_query.next()) |entity| {
+        const rectangle = rl.Rectangle{
+            .x = entity.position.value.x,
+            .y = entity.position.value.y,
+            .width = entity.box.extent.x,
+            .height = entity.box.extent.y,
+        };
+        rl.drawRectanglePro(
+            rectangle,
+            .zero(),
+            entity.rotation.degrees,
+            .{ .r = 255, .g = 0, .b = 0, .a = 150 },
+        );
+    }
+}
+
+pub fn playerMovement(player_pos: rl.Vector2) rl.Vector2 {
+    var x = player_pos.x;
+    var y = player_pos.y;
+
+    if (rl.isKeyDown(.right)) {
+        x += 3;
+    }
+    if (rl.isKeyDown(.left)) {
+        x -= 3;
+    }
+    if (rl.isKeyDown(.up)) {
+        y -= 3;
+    }
+    if (rl.isKeyDown(.down)) {
+        y += 3;
+    }
+    return rl.Vector2{ .x = x, .y = y };
 }
 
 /// Can be used to update a ezby file to understand the new component layout
