@@ -18,6 +18,7 @@ pub const init = Toolbar{
     .load_op_edit_mode = false,
     .render_entity_list = true,
     .render_entity_inspector = true,
+    .render_entity_collider = true,
     .game_loop_state = .stop,
     .game_loop_ezby_bytes = null,
 };
@@ -41,6 +42,7 @@ load_op_edit_mode: bool,
 
 render_entity_list: bool,
 render_entity_inspector: bool,
+render_entity_collider: bool,
 
 game_loop_state: GameloopState,
 game_loop_ezby_bytes: ?[]const u8,
@@ -170,6 +172,12 @@ pub fn draw(
         toolbar.render_entity_list = !toolbar.render_entity_list;
     }
 
+    rgui.setTooltip("Render colliders");
+    button_bounds.x -= layout_config.Toolbar.button_dim + layout_config.Toolbar.button_padding;
+    const colliders = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.emptybox)});
+    if (rgui.button(button_bounds, colliders)) {
+        toolbar.render_entity_collider = !toolbar.render_entity_collider;
+    }
     if (toolbar.panel_open != .none) {
         rgui.unlock();
     }

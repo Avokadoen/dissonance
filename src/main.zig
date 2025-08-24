@@ -11,6 +11,7 @@ const GameView = @import("GameView.zig");
 const SceneEditor = @import("SceneEditor.zig");
 const dark_style = @import("styling/dark.zig");
 const UpdateEventArgument = @import("common.zig").UpdateEventArgument;
+const DrawEventArgument = @import("common/DrawEventArgument.zig");
 
 const window_title = "dissonance";
 
