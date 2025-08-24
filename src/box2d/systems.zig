@@ -46,8 +46,8 @@ pub fn propagateBox2DPosition(position_query: *PositionPropagateQuery) void {
         const p = box2d_c.b2Body_GetWorldPoint(
             entity.box.body_id,
             box2d_c.b2Vec2{
-                .x = -entity.box.extent.x,
-                .y = -entity.box.extent.y,
+                .x = 0,
+                .y = 0,
             },
         );
         entity.position.value = rl.Vector2{
