@@ -5,12 +5,12 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
+const Box2DRT = @import("../Box2DRT.zig");
 const EntityInfo = @import("EntityInfo.zig");
 const layout_config = @import("layout_config.zig");
 const queries = @import("queries.zig");
 
 const EntityList = @This();
-
 pub const searchbar_len = 64;
 
 pub const init = EntityList{
@@ -29,6 +29,7 @@ pub fn draw(
     allocator: std.mem.Allocator,
     comptime Storage: type,
     storage: *Storage,
+    box2d_rt: *Box2DRT,
     selected_entity: *?ecez.Entity,
 ) !void {
     const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
@@ -156,7 +157,9 @@ pub fn draw(
             const paste_entity_txt = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.file_paste)});
             if (rgui.button(button_bound, paste_entity_txt)) {
                 if (entity_list.entity_copy_bytes) |ezby_bytes| {
+                    box2d_rt.reset();
                     try ecez.ezby.deserialize(Storage, .append, storage, ezby_bytes);
+                    try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
                 }
             }
 

@@ -53,6 +53,7 @@ pub fn draw(
             allocator,
             Storage,
             storage,
+            box2d_rt,
             &scene_editor.selected_entity,
         );
     }
@@ -60,6 +61,7 @@ pub fn draw(
     // Draw entity inspector
     if (scene_editor.toolbar.render_entity_inspector) {
         try scene_editor.entity_inspector.draw(
+            allocator,
             Storage,
             storage,
             box2d_rt,

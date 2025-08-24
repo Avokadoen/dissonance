@@ -38,6 +38,7 @@ fake_clipboard: [1024]u8,
 
 pub fn draw(
     entity_inspector: *EntityInspector,
+    allocator: std.mem.Allocator,
     comptime Storage: type,
     storage: *Storage,
     box2d_rt: *Box2DRT,
@@ -102,7 +103,9 @@ pub fn draw(
         rgui.setTooltip("Paste clipboard component into entity");
         const paste_txt = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.file_paste)});
         if (rgui.button(button_bound, paste_txt)) {
+            box2d_rt.reset();
             try readComponentFromClipboard(entity_inspector, selected_entity, Storage, storage);
+            try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
         }
         button_bound.x -= button_bound.width + layout_config.EntityInspector.spacing;
 
