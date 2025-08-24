@@ -103,8 +103,8 @@ pub const BoxCollider = struct {
         // Update polygon, just in case :)
         // These polygons are centered on the origin and when they are added to a body they
         // will be centered on the body position.
-        const ground_polygon = box2d_c.b2MakeBox(box.extent.x, box.extent.y);
+        const polygon = box2d_c.b2MakeBox(box.extent.x, box.extent.y);
         var shape_def = box2d_c.b2DefaultShapeDef();
-        _ = box2d_c.b2CreatePolygonShape(box.body_id, &shape_def, &ground_polygon);
+        _ = box2d_c.b2CreatePolygonShape(box.body_id, &shape_def, &polygon);
     }
 };

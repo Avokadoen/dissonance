@@ -66,6 +66,14 @@ pub fn reloadPhysicsState(box2d_rt: Box2DRT, allocator: std.mem.Allocator, compt
         body_def.rotation = box2d_c.b2MakeRot(radians);
         body_def.type = if (has_dynamic) box2d_c.b2_dynamicBody else box2d_c.b2_staticBody;
         entity.box.body_id = box2d_c.b2CreateBody(box2d_rt.world_id, &body_def);
+
+        // TODO: is this leaking?
+        // Update polygon, just in case :)
+        // These polygons are centered on the origin and when they are added to a body they
+        // will be centered on the body position.
+        const polygon = box2d_c.b2MakeBox(entity.box.extent.x, entity.box.extent.y);
+        var shape_def = box2d_c.b2DefaultShapeDef();
+        _ = box2d_c.b2CreatePolygonShape(entity.box.body_id, &shape_def, &polygon);
     }
 }
 
