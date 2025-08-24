@@ -1,5 +1,6 @@
 const std = @import("std");
 
+const rgui = @import("raygui");
 const rl = @import("raylib");
 
 const GameView = @This();
@@ -34,7 +35,9 @@ pub fn beginRendering(game_view: *GameView) void {
     rl.beginTextureMode(game_view.render);
 
     // TODO: not needed when rendering fully
-    rl.clearBackground(rl.Color.ray_white);
+    const background_color_value = rgui.getStyle(.default, .{ .default = .background_color });
+    const background_color = rl.getColor(background_color_value);
+    rl.clearBackground(background_color);
 }
 
 pub fn endRendering(game_view: *GameView) void {

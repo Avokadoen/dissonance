@@ -8,6 +8,7 @@ const tracy = @import("ztracy");
 
 const GameView = @import("GameView.zig");
 const SceneEditor = @import("SceneEditor.zig");
+const dark_style = @import("styling/dark.zig");
 
 const window_title = "dissonance";
 
@@ -123,6 +124,8 @@ pub fn main() anyerror!void {
 
     // rl.setExitKey(.null); // Dont want accidental quitting app while editing!
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
+
+    try dark_style.loadStyleDark();
 
     var scene_editor: SceneEditor = .init;
     defer scene_editor.deinit(allocator);
