@@ -70,6 +70,15 @@ pub fn build(b: *std.Build) void {
         exe.linkLibrary(ztracy_dep.artifact("tracy"));
     }
 
+    // link with box2d c headers
+    {
+        const box2d = b.dependency("box2d", .{
+            .shared = false,
+        });
+        const box2d_artifact = box2d.artifact("box2d");
+        exe.linkLibrary(box2d_artifact);
+    }
+
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);

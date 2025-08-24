@@ -5,6 +5,7 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
+const Box2DRT = @import("../Box2DRT.zig");
 const EntityInfo = @import("EntityInfo.zig");
 const layout_config = @import("layout_config.zig");
 const reflection = @import("reflection.zig");
@@ -39,6 +40,7 @@ pub fn draw(
     entity_inspector: *EntityInspector,
     comptime Storage: type,
     storage: *Storage,
+    box2d_rt: Box2DRT,
     maybe_selected_entity: *?ecez.Entity,
 ) !void {
     const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
@@ -232,7 +234,14 @@ pub fn draw(
                 const component = storage.getComponent(selected_entity, *Component).?;
 
                 if (comptime @hasDecl(Component, "sceneEditorOverrideWidget")) {
-                    component.sceneEditorOverrideWidget(entity_inspector, &components_bound);
+                    component.sceneEditorOverrideWidget(
+                        selected_entity,
+                        box2d_rt,
+                        entity_inspector,
+                        &components_bound,
+                        Storage,
+                        storage,
+                    );
                 } else {
                     reflection.renderStruct(
                         entity_inspector,

@@ -6,6 +6,7 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
+const Box2DRT = @import("Box2DRT.zig");
 const GameView = @import("GameView.zig");
 const SceneEditor = @import("SceneEditor.zig");
 const dark_style = @import("styling/dark.zig");
@@ -45,12 +46,18 @@ pub const components = .{
     A,
     Spinny,
     Position,
+    Box2DRT.components.BoxCollider,
+    Box2DRT.components.Position,
+    Box2DRT.components.Rotation,
+    Box2DRT.components.DynamicTag,
+    Box2DRT.components.StaticTag,
 };
 
-const UpdateEventArgument = struct {
+pub const UpdateEventArgument = struct {
     total_time: f64,
     delta_time: f32,
     frame_dim: rl.Vector2,
+    box2d_rt: Box2DRT,
 };
 
 pub const systems = struct {
@@ -77,10 +84,15 @@ pub const systems = struct {
 
 pub const Storage = ecez.CreateStorage(components);
 
+pub const Box2DSystems = Box2DRT.CreateSystems(Storage);
+
 pub const Scheduler = ecez.CreateScheduler(.{
     ecez.Event(
         "update",
         .{
+            Box2DSystems.doBox2DStep,
+            Box2DSystems.propagateBox2DPosition,
+            Box2DSystems.propagateBox2DRotation,
             systems.updateSpinny,
         },
         .{},
@@ -92,6 +104,9 @@ pub fn main() anyerror!void {
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();
+
+    var box2d_rt = Box2DRT.init(.{});
+    defer box2d_rt.deinit();
 
     var storage = try Storage.init(allocator);
     defer storage.deinit();
@@ -162,6 +177,7 @@ pub fn main() anyerror!void {
                     .x = @floatFromInt(current_game_view[2]),
                     .y = @floatFromInt(current_game_view[3]),
                 },
+                .box2d_rt = box2d_rt,
             });
             scheduler.waitEvent(.update);
         }
@@ -205,7 +221,13 @@ pub fn main() anyerror!void {
         rl.beginDrawing();
         defer rl.endDrawing();
 
-        current_game_view = try scene_editor.draw(allocator, Storage, &storage, &request_close);
+        current_game_view = try scene_editor.draw(
+            allocator,
+            Storage,
+            &storage,
+            box2d_rt,
+            &request_close,
+        );
         try game_view.rescaleGameView(current_game_view);
 
         try scene_editor.panelDraw(allocator, Storage, &storage);

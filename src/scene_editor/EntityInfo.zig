@@ -4,6 +4,7 @@ const ecez = @import("ecez");
 const rgui = @import("raygui");
 const rl = @import("raylib");
 
+const Box2DRT = @import("../Box2DRT.zig");
 const EntityInspector = @import("EntityInspector.zig");
 const layout_config = @import("layout_config.zig");
 
@@ -26,9 +27,16 @@ pub fn name(info: *EntityInfo) [:0]u8 {
 
 pub fn sceneEditorOverrideWidget(
     info: *EntityInfo,
+    selected_entity: ecez.Entity,
+    box2d_rt: Box2DRT,
     entity_inspector: *EntityInspector,
     parent_bounds: *rl.Rectangle,
+    comptime Storage: type,
+    storage: *Storage,
 ) void {
+    _ = selected_entity;
+    _ = box2d_rt;
+    _ = storage;
     _ = entity_inspector;
 
     const label_bounds = rl.Rectangle{

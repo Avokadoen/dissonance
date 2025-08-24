@@ -5,9 +5,11 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
-const EntityInspector = @import("scene_editor/EntityInspector.zig");
+const Box2DRT = @import("Box2DRT.zig");
+pub const EntityInspector = @import("scene_editor/EntityInspector.zig");
 const EntityList = @import("scene_editor/EntityList.zig");
-const layout_config = @import("scene_editor/layout_config.zig");
+pub const layout_config = @import("scene_editor/layout_config.zig");
+pub const reflection = @import("scene_editor/reflection.zig");
 const Toolbar = @import("scene_editor/Toolbar.zig");
 
 pub const components = struct {
@@ -32,6 +34,7 @@ pub fn draw(
     allocator: std.mem.Allocator,
     comptime Storage: type,
     storage: *Storage,
+    box2d_rt: Box2DRT,
     request_close: *bool,
 ) ![4]u32 {
     const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
@@ -59,6 +62,7 @@ pub fn draw(
         try scene_editor.entity_inspector.draw(
             Storage,
             storage,
+            box2d_rt,
             &scene_editor.selected_entity,
         );
     }

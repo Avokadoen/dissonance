@@ -12,6 +12,10 @@
             .url = "git+https://github.com/Avokadoen/ecez#85f50eced3dd2a0d1359aba3b7872767478b61fc",
             .hash = "ecez-0.0.0-X-dkoI0DBgAJjYg2DBcS4iVQxtbUF1Bmt7NuLrTyANjG",
         },
+        .box2d = .{
+            .url = "git+https://github.com/martindrlik/box2d.git#2d55690899e59c00c859a7e93bd7c2f2e16082be",
+            .hash = "box2d-3.0.0-C17qGFEdEADRRLfJcB_X4yxmRLaMMB27FxGcBl6eGisV",
+        },
     },
     .paths = .{
         "build.zig",
