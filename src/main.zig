@@ -137,16 +137,17 @@ pub fn main() anyerror!void {
 
     var total_time: f64 = 0;
     var request_close: bool = false;
+
+    var current_game_view = [4]u32{
+        0,
+        0,
+        @intCast(rl.getRenderWidth()),
+        @intCast(rl.getRenderHeight()),
+    };
     while (!rl.windowShouldClose() and !request_close) { // Detect window close button or ESC key
         tracy.FrameMark();
 
         const delta_time = rl.getFrameTime();
-
-        rl.beginDrawing();
-        defer rl.endDrawing();
-
-        const current_game_view = try scene_editor.draw(allocator, Storage, &storage, &request_close);
-        try game_view.rescaleGameView(current_game_view);
 
         if (scene_editor.isGamePaused() == false) {
             const game_update_zone = tracy.ZoneN(@src(), "game_update");
@@ -200,6 +201,12 @@ pub fn main() anyerror!void {
             .width = @floatFromInt(current_game_view[2]),
             .height = @floatFromInt(current_game_view[3]),
         });
+
+        rl.beginDrawing();
+        defer rl.endDrawing();
+
+        current_game_view = try scene_editor.draw(allocator, Storage, &storage, &request_close);
+        try game_view.rescaleGameView(current_game_view);
 
         try scene_editor.panelDraw(allocator, Storage, &storage);
     }
