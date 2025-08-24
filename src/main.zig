@@ -204,3 +204,23 @@ pub fn main() anyerror!void {
         try scene_editor.panelDraw(allocator, Storage, &storage);
     }
 }
+
+/// Can be used to update a ezby file to understand the new component layout
+/// We need to maintain both the old and new component layout for the transition however
+pub fn migrateEzby(
+    comptime ComponentA: type,
+    comptime ComponentB: type,
+    storage: *Storage,
+    allocator: std.mem.Allocator,
+    comptime convert_a_to_b_fn: fn (a: ComponentA) ComponentB,
+) !void {
+    const ComponentAQuery = ecez.Query(struct {
+        handle: ecez.Entity,
+        a: ComponentA,
+    }, .{}, .{});
+    var a_iter = try ComponentAQuery.submit(allocator, storage);
+    while (a_iter.next()) |entity_a| {
+        const b = convert_a_to_b_fn(entity_a.a);
+        storage.setComponenty(entity_a.handle, b);
+    }
+}
