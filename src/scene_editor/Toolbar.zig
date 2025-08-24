@@ -6,6 +6,7 @@ const rgui = @import("raygui");
 const rl = @import("raylib");
 const tracy = @import("ztracy");
 
+const Box2DRT = @import("../Box2DRT.zig");
 const layout_config = @import("layout_config.zig");
 
 const Toolbar = @This();
@@ -55,6 +56,7 @@ pub fn draw(
     allocator: std.mem.Allocator,
     comptime Storage: type,
     storage: *Storage,
+    box2d_rt: *Box2DRT,
     request_close: *bool,
 ) !void {
     const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
@@ -130,9 +132,14 @@ pub fn draw(
             .play, .pause => {
                 // Load serialized storage state
                 if (toolbar.game_loop_ezby_bytes) |ezby_bytes| {
+                    // Destroy physics world
+                    box2d_rt.reset();
+
                     try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_bytes);
                     toolbar.game_loop_ezby_bytes = null;
                     allocator.free(ezby_bytes);
+
+                    try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
                 }
 
                 toolbar.game_loop_state = .stop;
@@ -168,15 +175,28 @@ pub fn draw(
     }
 }
 
-pub fn panelDraw(toolbar: *Toolbar, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
+pub fn panelDraw(
+    toolbar: *Toolbar,
+    allocator: std.mem.Allocator,
+    comptime Storage: type,
+    storage: *Storage,
+    box2d_rt: *Box2DRT,
+) !void {
     try switch (toolbar.panel_open) {
         .none => {},
-        .save => saveOrLoadUi(.save, toolbar, allocator, Storage, storage),
-        .load => saveOrLoadUi(.load, toolbar, allocator, Storage, storage),
+        .save => saveOrLoadUi(.save, toolbar, allocator, Storage, storage, box2d_rt),
+        .load => saveOrLoadUi(.load, toolbar, allocator, Storage, storage, box2d_rt),
     };
 }
 
-fn saveOrLoadUi(comptime op: enum { save, load }, toolbar: *Toolbar, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
+fn saveOrLoadUi(
+    comptime op: enum { save, load },
+    toolbar: *Toolbar,
+    allocator: std.mem.Allocator,
+    comptime Storage: type,
+    storage: *Storage,
+    box2d_rt: *Box2DRT,
+) !void {
     const r_width: f32 = @floatFromInt(rl.getRenderWidth());
     const r_height: f32 = @floatFromInt(rl.getRenderHeight());
 
@@ -263,7 +283,7 @@ fn saveOrLoadUi(comptime op: enum { save, load }, toolbar: *Toolbar, allocator: 
                     const bytes = try saveScene(scene_name, allocator, Storage, storage);
                     allocator.free(bytes);
                 } else {
-                    loadScene(toolbar.load_op, scene_name, allocator, Storage, storage) catch |err| {
+                    loadScene(toolbar.load_op, scene_name, allocator, Storage, storage, box2d_rt) catch |err| {
                         switch (err) {
                             // User most likely typed an invalid scene name
                             error.InvalidSceneName => toolbar.panel_open = .load,
@@ -286,7 +306,7 @@ fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Stor
     return bytes;
 }
 
-fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
+fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage, box2d_rt: *Box2DRT) !void {
     var scenes_dir = try getScenesDir(allocator);
     defer scenes_dir.close();
 
@@ -296,10 +316,15 @@ fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std
     const ezby_scene = try scene_file.readToEndAlloc(allocator, std.math.pow(usize, 1024, 3) * 256);
     defer allocator.free(ezby_scene);
 
+    // Reset physics world
+    box2d_rt.reset();
+
     switch (op) {
         .overwrite => try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_scene),
         .append => try ecez.ezby.deserialize(Storage, .append, storage, ezby_scene),
     }
+
+    try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
 }
 
 fn getScenesDir(allocator: std.mem.Allocator) !std.fs.Dir {

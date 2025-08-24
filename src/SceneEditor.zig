@@ -34,7 +34,7 @@ pub fn draw(
     allocator: std.mem.Allocator,
     comptime Storage: type,
     storage: *Storage,
-    box2d_rt: Box2DRT,
+    box2d_rt: *Box2DRT,
     request_close: *bool,
 ) ![4]u32 {
     const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
@@ -72,7 +72,7 @@ pub fn draw(
     }
 
     // Draw toolbar
-    try scene_editor.toolbar.draw(allocator, Storage, storage, request_close);
+    try scene_editor.toolbar.draw(allocator, Storage, storage, box2d_rt, request_close);
 
     // Draw asset view
     // TODO (show 3D models, audio ...)
@@ -95,8 +95,14 @@ pub fn draw(
     };
 }
 
-pub fn panelDraw(scene_editor: *SceneEditor, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
-    try scene_editor.toolbar.panelDraw(allocator, Storage, storage);
+pub fn panelDraw(
+    scene_editor: *SceneEditor,
+    allocator: std.mem.Allocator,
+    comptime Storage: type,
+    storage: *Storage,
+    box2d_rt: *Box2DRT,
+) !void {
+    try scene_editor.toolbar.panelDraw(allocator, Storage, storage, box2d_rt);
 }
 
 pub fn isGamePaused(scene_editor: SceneEditor) bool {

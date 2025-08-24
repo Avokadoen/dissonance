@@ -42,14 +42,26 @@ pub const components = struct {
             comptime Storage: type,
             storage: *Storage,
         ) void {
-            const position = storage.getComponent(selected_entity, Position) orelse {
+            const position: Position = storage.getComponent(selected_entity, Position) orelse {
                 const label_bounds = rl.Rectangle{
                     .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
                     .y = parent_bounds.y,
                     .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
                     .height = layout_config.font_size * 1.5,
                 };
-                _ = rgui.label(label_bounds, "Box requires position component!");
+                _ = rgui.label(label_bounds, "Box requires Position component!");
+                parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
+                return;
+            };
+
+            const rotation: Rotation = storage.getComponent(selected_entity, Rotation) orelse {
+                const label_bounds = rl.Rectangle{
+                    .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
+                    .y = parent_bounds.y,
+                    .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
+                    .height = layout_config.font_size * 1.5,
+                };
+                _ = rgui.label(label_bounds, "Box requires Rotation component!");
                 parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
                 return;
             };
@@ -76,6 +88,8 @@ pub const components = struct {
             if (box2d_c.B2_IS_NULL(box.body_id)) {
                 var body_def = box2d_c.b2DefaultBodyDef();
                 body_def.position = box2d_c.b2Vec2{ .x = position.value.x, .y = position.value.y };
+                const radians = std.math.degreesToRadians(rotation.degrees);
+                body_def.rotation = box2d_c.b2MakeRot(radians);
                 body_def.type = if (has_dynamic) box2d_c.b2_dynamicBody else box2d_c.b2_staticBody;
                 box.body_id = box2d_c.b2CreateBody(box2d_rt.world_id, &body_def);
             }
@@ -170,6 +184,42 @@ pub fn init(config: Config) Box2DRT {
         .config = config,
         .world_id = world_id,
     };
+}
+
+pub fn reset(box2d_rt: *Box2DRT) void {
+    box2d_c.b2DestroyWorld(box2d_rt.world_id);
+
+    box2d_c.b2SetLengthUnitsPerMeter(box2d_rt.config.length_units_per_meter);
+
+    var world_def = box2d_c.b2DefaultWorldDef();
+    world_def.gravity.y = box2d_rt.config.gravity * box2d_rt.config.length_units_per_meter;
+    box2d_rt.world_id = box2d_c.b2CreateWorld(&world_def);
+}
+
+/// Reload physics engine to sync with storage loads
+pub fn reloadPhysicsState(box2d_rt: Box2DRT, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
+    const BoxColliderQuery = ecez.Query(struct {
+        handle: ecez.Entity,
+        box: *components.BoxCollider,
+        position: components.Position,
+        rotation: components.Rotation,
+    }, .{}, .{});
+    var box_iter = try BoxColliderQuery.submit(allocator, storage);
+    defer box_iter.deinit(allocator);
+    while (box_iter.next()) |entity| {
+        const has_dynamic = storage.hasComponents(entity.handle, .{components.DynamicTag});
+        const has_static = storage.hasComponents(entity.handle, .{components.StaticTag});
+        // TODO: maybe DONT crash if user adds both :)
+        // Fuck you if you add both ...
+        std.debug.assert((has_dynamic and has_static) == false);
+
+        var body_def = box2d_c.b2DefaultBodyDef();
+        body_def.position = box2d_c.b2Vec2{ .x = entity.position.value.x, .y = entity.position.value.y };
+        const radians = std.math.degreesToRadians(entity.rotation.degrees);
+        body_def.rotation = box2d_c.b2MakeRot(radians);
+        body_def.type = if (has_dynamic) box2d_c.b2_dynamicBody else box2d_c.b2_staticBody;
+        entity.box.body_id = box2d_c.b2CreateBody(box2d_rt.world_id, &body_def);
+    }
 }
 
 pub fn deinit(box2d_rt: Box2DRT) void {

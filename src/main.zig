@@ -36,16 +36,9 @@ pub const Spinny = struct {
     radius: f32 = 100,
 };
 
-pub const Position = struct {
-    value: rl.Vector2,
-};
-
 pub const components = .{
     SceneEditor.components.EntityInfo,
     TestComponent,
-    A,
-    Spinny,
-    Position,
     Box2DRT.components.BoxCollider,
     Box2DRT.components.Position,
     Box2DRT.components.Rotation,
@@ -60,27 +53,7 @@ pub const UpdateEventArgument = struct {
     box2d_rt: Box2DRT,
 };
 
-pub const systems = struct {
-    const UpdateSpinnyQuery = ecez.Query(
-        struct {
-            pos: *Position,
-            spinny: *const Spinny,
-        },
-        .{},
-        .{},
-    );
-    pub fn updateSpinny(spinny_query: *UpdateSpinnyQuery, event_arg: UpdateEventArgument) void {
-        while (spinny_query.next()) |spin| {
-            const circle_x: f32 = @floatCast(std.math.sin(event_arg.total_time + spin.spinny.ring_offset));
-            const cicler_y: f32 = @floatCast(std.math.cos(event_arg.total_time + spin.spinny.ring_offset));
-
-            spin.pos.value = rl.Vector2{
-                .x = circle_x * spin.spinny.radius + (event_arg.frame_dim.x * 0.5 - 100),
-                .y = cicler_y * spin.spinny.radius + (event_arg.frame_dim.y * 0.5 - 100),
-            };
-        }
-    }
-};
+pub const systems = struct {};
 
 pub const Storage = ecez.CreateStorage(components);
 
@@ -93,7 +66,6 @@ pub const Scheduler = ecez.CreateScheduler(.{
             Box2DSystems.doBox2DStep,
             Box2DSystems.propagateBox2DPosition,
             Box2DSystems.propagateBox2DRotation,
-            systems.updateSpinny,
         },
         .{},
     ),
@@ -191,24 +163,6 @@ pub fn main() anyerror!void {
             defer game_view.endRendering();
 
             // !!Game graphics here!!
-            const SpinnyDrawQuery = ecez.Query(
-                struct {
-                    pos: Position,
-                },
-                .{Spinny},
-                .{},
-            );
-            var spinny_iter = try SpinnyDrawQuery.submit(allocator, &storage);
-            defer spinny_iter.deinit(allocator);
-            while (spinny_iter.next()) |spinny| {
-                rl.drawText(
-                    "game view",
-                    @intFromFloat(spinny.pos.value.x),
-                    @intFromFloat(spinny.pos.value.y),
-                    20,
-                    .light_gray,
-                );
-            }
         }
 
         game_view.present(rl.Rectangle{
@@ -225,12 +179,12 @@ pub fn main() anyerror!void {
             allocator,
             Storage,
             &storage,
-            box2d_rt,
+            &box2d_rt,
             &request_close,
         );
         try game_view.rescaleGameView(current_game_view);
 
-        try scene_editor.panelDraw(allocator, Storage, &storage);
+        try scene_editor.panelDraw(allocator, Storage, &storage, &box2d_rt);
     }
 }
 

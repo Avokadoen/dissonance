@@ -40,7 +40,7 @@ pub fn draw(
     entity_inspector: *EntityInspector,
     comptime Storage: type,
     storage: *Storage,
-    box2d_rt: Box2DRT,
+    box2d_rt: *Box2DRT,
     maybe_selected_entity: *?ecez.Entity,
 ) !void {
     const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
@@ -236,7 +236,7 @@ pub fn draw(
                 if (comptime @hasDecl(Component, "sceneEditorOverrideWidget")) {
                     component.sceneEditorOverrideWidget(
                         selected_entity,
-                        box2d_rt,
+                        box2d_rt.*,
                         entity_inspector,
                         &components_bound,
                         Storage,
