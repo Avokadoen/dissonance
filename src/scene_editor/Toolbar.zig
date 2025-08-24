@@ -277,30 +277,17 @@ fn saveOrLoadUi(comptime op: enum { save, load }, toolbar: *Toolbar, allocator: 
 }
 
 fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) ![]const u8 {
-    const bytes = try ecez.ezby.serialize(allocator, Storage, storage.*, .{});
-
-    const dir_path = try std.fs.selfExeDirPathAlloc(allocator);
-    defer allocator.free(dir_path);
-
-    var dir = try std.fs.openDirAbsolute(dir_path, .{ .access_sub_paths = true });
-    defer dir.close();
-
-    var scenes_dir = try dir.makeOpenPath("scenes", .{ .access_sub_paths = true });
+    var scenes_dir = try getScenesDir(allocator);
     defer scenes_dir.close();
 
+    const bytes = try ecez.ezby.serialize(allocator, Storage, storage.*, .{});
     try scenes_dir.writeFile(.{ .sub_path = scene_name, .data = bytes });
 
     return bytes;
 }
 
 fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
-    const dir_path = try std.fs.selfExeDirPathAlloc(allocator);
-    defer allocator.free(dir_path);
-
-    var dir = try std.fs.openDirAbsolute(dir_path, .{ .access_sub_paths = true });
-    defer dir.close();
-
-    var scenes_dir = try dir.makeOpenPath("scenes", .{ .access_sub_paths = true });
+    var scenes_dir = try getScenesDir(allocator);
     defer scenes_dir.close();
 
     const scene_file = scenes_dir.openFile(scene_name, .{}) catch return error.InvalidSceneName;
@@ -313,4 +300,22 @@ fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std
         .overwrite => try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_scene),
         .append => try ecez.ezby.deserialize(Storage, .append, storage, ezby_scene),
     }
+}
+
+fn getScenesDir(allocator: std.mem.Allocator) !std.fs.Dir {
+    const dir_path = try std.fs.selfExeDirPathAlloc(allocator);
+    defer allocator.free(dir_path);
+
+    const sep_str = std.fs.path.sep_str;
+    const go_to_parent_str = sep_str ++ "..";
+
+    var parent_path = try allocator.alloc(u8, dir_path.len + go_to_parent_str.len);
+    defer allocator.free(parent_path);
+    @memcpy(parent_path[0..dir_path.len], dir_path);
+    @memcpy(parent_path[dir_path.len .. dir_path.len + go_to_parent_str.len], go_to_parent_str);
+
+    var base_dir = try std.fs.openDirAbsolute(parent_path, .{ .access_sub_paths = true });
+    defer base_dir.close();
+
+    return base_dir.makeOpenPath("scenes", .{ .access_sub_paths = true });
 }
