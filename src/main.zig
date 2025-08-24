@@ -109,7 +109,7 @@ pub fn main() anyerror!void {
     // the windows AFTER init it seems to work fine however.
     rl.setWindowState(.{ .window_maximized = true });
 
-    // rl.setExitKey(.null); // Dont want accidental quitting app while editing!
+    rl.setExitKey(.null); // Dont want accidental quitting app while editing!
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
 
     try dark_style.loadStyleDark();
