@@ -21,7 +21,6 @@ pub const components = .{
     Box2DRT.components.Position,
     Box2DRT.components.Rotation,
     Box2DRT.components.DynamicTag,
-    Box2DRT.components.StaticTag,
 };
 
 pub const systems = struct {};
@@ -35,6 +34,7 @@ pub const Scheduler = ecez.CreateScheduler(.{
             Box2DRT.systems.doBox2DStep,
             Box2DRT.systems.propagateBox2DPosition,
             Box2DRT.systems.propagateBox2DRotation,
+            Box2DRT.systems.handleContactEvents,
         },
         .{},
     ),

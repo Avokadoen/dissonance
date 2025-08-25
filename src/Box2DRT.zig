@@ -58,36 +58,24 @@ pub fn reloadPhysicsState(box2d_rt: *Box2DRT, allocator: std.mem.Allocator, comp
     const BoxColliderQuery = ecez.Query(struct {
         handle: ecez.Entity,
         box: *components.BoxCollider,
-        position: components.Position,
-        rotation: components.Rotation,
+        position: *const components.Position,
+        rotation: *const components.Rotation,
     }, .{}, .{});
     var box_iter = try BoxColliderQuery.submit(allocator, storage);
     defer box_iter.deinit(allocator);
     while (box_iter.next()) |entity| {
         const has_dynamic = storage.hasComponents(entity.handle, .{components.DynamicTag});
-        var has_static = storage.hasComponents(entity.handle, .{components.StaticTag});
-
-        if ((has_dynamic and has_static) == false) {
-            has_static = true;
-        }
-
         const radians = std.math.degreesToRadians(entity.rotation.degrees);
         const box2d_rot = box2d_c.b2MakeRot(radians);
         const box2d_pos = box2d_c.b2Vec2{
             .x = entity.position.value.x,
             .y = entity.position.value.y,
         };
-
-        var body_def = box2d_c.b2DefaultBodyDef();
-        body_def.position = box2d_pos;
-        body_def.rotation = box2d_rot;
-        body_def.type = if (has_dynamic) box2d_c.b2_dynamicBody else box2d_c.b2_staticBody;
-        entity.box.body_id = box2d_c.b2CreateBody(box2d_rt.world_id, &body_def);
-
+        box2d_rt.createBody(entity.handle, entity.box, box2d_pos, box2d_rot, has_dynamic);
         box2d_c.b2Body_SetTransform(entity.box.body_id, box2d_pos, box2d_rot);
 
         const polygon = box2d_c.b2MakeBox(entity.box.extent.x * 0.5, entity.box.extent.y * 0.5);
-        var shape_def = box2d_c.b2DefaultShapeDef();
+        var shape_def = defaultShapeDef();
         entity.box.shape_id = box2d_c.b2CreatePolygonShape(entity.box.body_id, &shape_def, &polygon);
     }
 }
@@ -100,6 +88,32 @@ pub fn getRaylibWorldPos(box: components.BoxCollider) box2d_c.b2Vec2 {
             .y = -box.extent.y * 0.5,
         },
     );
+}
+
+pub fn createBody(
+    box2d_rt: *const Box2DRT,
+    entity: ecez.Entity,
+    box: *components.BoxCollider,
+    box2d_pos: box2d_c.b2Vec2,
+    box2d_rot: box2d_c.b2Rot,
+    has_dynamic: bool,
+) void {
+    var body_def = box2d_c.b2DefaultBodyDef();
+    body_def.position = box2d_pos;
+    body_def.rotation = box2d_rot;
+    body_def.type = if (has_dynamic) box2d_c.b2_dynamicBody else box2d_c.b2_staticBody;
+    // HACK: Store the entity handle as a address to some data, but then the address is the data ...
+    body_def.userData = @ptrFromInt(@as(usize, @intCast(entity.id)));
+    box.body_id = box2d_c.b2CreateBody(box2d_rt.world_id, &body_def);
+}
+
+pub fn defaultShapeDef() box2d_c.b2ShapeDef {
+    var shape_def = box2d_c.b2DefaultShapeDef();
+    // shape_def.enableSensorEvents = true;
+    // shape_def.enableContactEvents = true;
+    shape_def.enableHitEvents = true;
+    shape_def.invokeContactCreation = true;
+    return shape_def;
 }
 
 pub fn deinit(box2d_rt: Box2DRT) void {

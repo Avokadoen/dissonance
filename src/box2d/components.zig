@@ -15,7 +15,6 @@ const components = @import("components.zig");
 
 const box2d_c = @cImport(@cInclude("box2d/box2d.h"));
 pub const DynamicTag = struct {};
-pub const StaticTag = struct {};
 
 pub const Position = struct {
     value: rl.Vector2,
@@ -68,22 +67,6 @@ pub const BoxCollider = struct {
         };
 
         const has_dynamic = storage.hasComponents(selected_entity, .{DynamicTag});
-        const has_static = storage.hasComponents(selected_entity, .{StaticTag});
-        // TODO: maybe DONT crash if user adds both :)
-        // Fuck you if you add both ...
-        std.debug.assert((has_dynamic and has_static) == false);
-
-        if (!has_dynamic and !has_static) {
-            const label_bounds = rl.Rectangle{
-                .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
-                .y = parent_bounds.y,
-                .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
-                .height = layout_config.font_size * 1.5,
-            };
-            _ = rgui.label(label_bounds, "Box requires either DynamicTag or StaticTag!");
-            parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
-            return;
-        }
 
         const radians = std.math.degreesToRadians(rotation.degrees);
         const box2d_rot = box2d_c.b2MakeRot(radians);
@@ -94,11 +77,7 @@ pub const BoxCollider = struct {
 
         // Box newly created, register in box2d
         if (box2d_c.B2_IS_NULL(box.body_id)) {
-            var body_def = box2d_c.b2DefaultBodyDef();
-            body_def.position = box2d_pos;
-            body_def.rotation = box2d_rot;
-            body_def.type = if (has_dynamic) box2d_c.b2_dynamicBody else box2d_c.b2_staticBody;
-            box.body_id = box2d_c.b2CreateBody(box2d_rt.world_id, &body_def);
+            box2d_rt.createBody(selected_entity, box, box2d_pos, box2d_rot, has_dynamic);
         }
 
         if (is_playing == false) {
@@ -122,7 +101,7 @@ pub const BoxCollider = struct {
         }
 
         const polygon = box2d_c.b2MakeBox(box.extent.x * 0.5, box.extent.y * 0.5);
-        var shape_def = box2d_c.b2DefaultShapeDef();
+        var shape_def = Box2DRT.defaultShapeDef();
         box.shape_id = box2d_c.b2CreatePolygonShape(box.body_id, &shape_def, &polygon);
     }
 };
