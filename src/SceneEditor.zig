@@ -10,7 +10,7 @@ pub const EntityInspector = @import("scene_editor/EntityInspector.zig");
 const EntityList = @import("scene_editor/EntityList.zig");
 pub const layout_config = @import("scene_editor/layout_config.zig");
 pub const reflection = @import("scene_editor/reflection.zig");
-const Toolbar = @import("scene_editor/Toolbar.zig");
+pub const Toolbar = @import("scene_editor/Toolbar.zig");
 
 pub const components = struct {
     pub const EntityInfo = @import("scene_editor/EntityInfo.zig");
@@ -28,6 +28,11 @@ toolbar: Toolbar,
 entity_list: EntityList,
 entity_inspector: EntityInspector,
 selected_entity: ?ecez.Entity,
+
+pub fn deinit(scene_editor: *SceneEditor, allocator: std.mem.Allocator) void {
+    scene_editor.entity_list.deinit(allocator);
+    scene_editor.toolbar.deinit(allocator);
+}
 
 pub fn draw(
     scene_editor: *SceneEditor,
@@ -65,6 +70,7 @@ pub fn draw(
             Storage,
             storage,
             box2d_rt,
+            scene_editor.toolbar.game_loop_state == .play,
             &scene_editor.selected_entity,
         );
     }
@@ -109,9 +115,4 @@ pub fn panelDraw(
 
 pub fn isGamePaused(scene_editor: SceneEditor) bool {
     return scene_editor.toolbar.game_loop_state != .play;
-}
-
-pub fn deinit(scene_editor: *SceneEditor, allocator: std.mem.Allocator) void {
-    scene_editor.entity_list.deinit(allocator);
-    scene_editor.toolbar.deinit(allocator);
 }

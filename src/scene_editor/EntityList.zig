@@ -157,7 +157,7 @@ pub fn draw(
             const paste_entity_txt = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.file_paste)});
             if (rgui.button(button_bound, paste_entity_txt)) {
                 if (entity_list.entity_copy_bytes) |ezby_bytes| {
-                    box2d_rt.reset();
+                    try box2d_rt.reset(allocator, Storage, storage);
                     try ecez.ezby.deserialize(Storage, .append, storage, ezby_bytes);
                     try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
                 }

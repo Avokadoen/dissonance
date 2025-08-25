@@ -42,6 +42,7 @@ pub fn draw(
     comptime Storage: type,
     storage: *Storage,
     box2d_rt: *Box2DRT,
+    is_playing: bool,
     maybe_selected_entity: *?ecez.Entity,
 ) !void {
     const zone = tracy.ZoneN(@src(), @typeName(@This()) ++ "." ++ @src().fn_name);
@@ -103,7 +104,7 @@ pub fn draw(
         rgui.setTooltip("Paste clipboard component into entity");
         const paste_txt = std.fmt.comptimePrint("#{d}#", .{@intFromEnum(rgui.IconName.file_paste)});
         if (rgui.button(button_bound, paste_txt)) {
-            box2d_rt.reset();
+            try box2d_rt.reset(allocator, Storage, storage);
             try readComponentFromClipboard(entity_inspector, selected_entity, Storage, storage);
             try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
         }
@@ -241,6 +242,7 @@ pub fn draw(
                         selected_entity,
                         box2d_rt.*,
                         entity_inspector,
+                        is_playing,
                         &components_bound,
                         Storage,
                         storage,

@@ -135,7 +135,7 @@ pub fn draw(
                 // Load serialized storage state
                 if (toolbar.game_loop_ezby_bytes) |ezby_bytes| {
                     // Destroy physics world
-                    box2d_rt.reset();
+                    try box2d_rt.reset(allocator, Storage, storage);
 
                     try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_bytes);
                     toolbar.game_loop_ezby_bytes = null;
@@ -304,7 +304,7 @@ fn saveOrLoadUi(
     }
 }
 
-fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) ![]const u8 {
+pub fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) ![]const u8 {
     var scenes_dir = try getScenesDir(allocator);
     defer scenes_dir.close();
 
@@ -314,7 +314,7 @@ fn saveScene(scene_name: []const u8, allocator: std.mem.Allocator, comptime Stor
     return bytes;
 }
 
-fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage, box2d_rt: *Box2DRT) !void {
+pub fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage, box2d_rt: *Box2DRT) !void {
     var scenes_dir = try getScenesDir(allocator);
     defer scenes_dir.close();
 
@@ -325,13 +325,11 @@ fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator: std
     defer allocator.free(ezby_scene);
 
     // Reset physics world
-    box2d_rt.reset();
-
+    try box2d_rt.reset(allocator, Storage, storage);
     switch (op) {
         .overwrite => try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_scene),
         .append => try ecez.ezby.deserialize(Storage, .append, storage, ezby_scene),
     }
-
     try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
 }
 

@@ -30,14 +30,16 @@ pub fn sceneEditorOverrideWidget(
     selected_entity: ecez.Entity,
     box2d_rt: Box2DRT,
     entity_inspector: *EntityInspector,
+    is_playing: bool,
     parent_bounds: *rl.Rectangle,
     comptime Storage: type,
     storage: *Storage,
 ) void {
     _ = selected_entity;
     _ = box2d_rt;
-    _ = storage;
+    _ = is_playing;
     _ = entity_inspector;
+    _ = storage;
 
     const label_bounds = rl.Rectangle{
         .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,

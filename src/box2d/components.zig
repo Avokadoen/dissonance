@@ -27,6 +27,7 @@ pub const Rotation = struct {
 
 pub const BoxCollider = struct {
     body_id: box2d_c.b2BodyId = box2d_c.b2_nullBodyId,
+    shape_id: box2d_c.b2ShapeId,
     extent: box2d_c.b2Vec2 = .{
         .x = 10,
         .y = 10,
@@ -37,6 +38,7 @@ pub const BoxCollider = struct {
         selected_entity: ecez.Entity,
         box2d_rt: Box2DRT,
         entity_inspector: *EntityInspector,
+        is_playing: bool,
         parent_bounds: *rl.Rectangle,
         comptime Storage: type,
         storage: *Storage,
@@ -83,28 +85,44 @@ pub const BoxCollider = struct {
             return;
         }
 
+        const radians = std.math.degreesToRadians(rotation.degrees);
+        const box2d_rot = box2d_c.b2MakeRot(radians);
+        const box2d_pos = box2d_c.b2Vec2{
+            .x = position.value.x,
+            .y = position.value.y,
+        };
+
         // Box newly created, register in box2d
         if (box2d_c.B2_IS_NULL(box.body_id)) {
             var body_def = box2d_c.b2DefaultBodyDef();
-            body_def.position = box2d_c.b2Vec2{ .x = position.value.x, .y = position.value.y };
-            const radians = std.math.degreesToRadians(rotation.degrees);
-            body_def.rotation = box2d_c.b2MakeRot(radians);
+            body_def.position = box2d_pos;
+            body_def.rotation = box2d_rot;
             body_def.type = if (has_dynamic) box2d_c.b2_dynamicBody else box2d_c.b2_staticBody;
             box.body_id = box2d_c.b2CreateBody(box2d_rt.world_id, &body_def);
         }
 
+        if (is_playing == false) {
+            box2d_c.b2Body_SetTransform(box.body_id, box2d_pos, box2d_rot);
+        }
+
+        const prev = box.extent;
         reflection.renderStruct(entity_inspector, box2d_c.b2Vec2, &box.extent, parent_bounds);
+        // TODO: float comparison bad
+        if (prev.x == box.extent.x and prev.y == box.extent.y) {
+            return;
+        }
 
         // Disallow 0 extent
         box.extent.x = @max(box.extent.x, 1);
         box.extent.y = @max(box.extent.y, 1);
 
-        // TODO: is this leaking?
-        // Update polygon, just in case :)
-        // These polygons are centered on the origin and when they are added to a body they
-        // will be centered on the body position.
-        const polygon = box2d_c.b2MakeBox(box.extent.x, box.extent.y);
+        if (box2d_c.B2_IS_NULL(box.shape_id) == false) {
+            const update_body_mass = false;
+            box2d_c.b2DestroyShape(box.shape_id, update_body_mass);
+        }
+
+        const polygon = box2d_c.b2MakeBox(box.extent.x * 0.5, box.extent.y * 0.5);
         var shape_def = box2d_c.b2DefaultShapeDef();
-        _ = box2d_c.b2CreatePolygonShape(box.body_id, &shape_def, &polygon);
+        box.shape_id = box2d_c.b2CreatePolygonShape(box.body_id, &shape_def, &polygon);
     }
 };

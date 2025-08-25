@@ -7,40 +7,16 @@ const rl = @import("raylib");
 const ztracy = @import("ztracy");
 
 const Box2DRT = @import("Box2DRT.zig");
+const DrawEventArgument = @import("common/DrawEventArgument.zig");
 const GameView = @import("GameView.zig");
 const SceneEditor = @import("SceneEditor.zig");
 const dark_style = @import("styling/dark.zig");
 const UpdateEventArgument = @import("common.zig").UpdateEventArgument;
-const DrawEventArgument = @import("common/DrawEventArgument.zig");
 
 const window_title = "dissonance";
 
-pub const TestComponent = struct {
-    cocky_want_boing_boing: bool = true,
-    killy_count: u32 = 69,
-    cool_factor: f64 = 100,
-    friends: [3]u32 = [_]u32{ 2, 3, 4 },
-    floaty_friends: [2]f16 = [_]f16{ 4.3, 3.2 },
-    rect_dis_nuts: rl.Rectangle = .{
-        .x = 22,
-        .y = 33,
-        .height = 2,
-        .width = 1,
-    },
-    person: enum { alpha, beta, cuck } = .cuck,
-    mood: enum { happy, sad } = .happy,
-};
-
-pub const A = struct {};
-
-pub const Spinny = struct {
-    ring_offset: f64 = 0,
-    radius: f32 = 100,
-};
-
 pub const components = .{
     SceneEditor.components.EntityInfo,
-    TestComponent,
     Box2DRT.components.BoxCollider,
     Box2DRT.components.Position,
     Box2DRT.components.Rotation,
@@ -118,6 +94,16 @@ pub fn main() anyerror!void {
 
     var scene_editor: SceneEditor = .init;
     defer scene_editor.deinit(allocator);
+
+    // Try to load last played scene as a default
+    SceneEditor.Toolbar.loadScene(
+        .overwrite,
+        "play_backup.ezby",
+        allocator,
+        Storage,
+        &storage,
+        &box2d_rt,
+    ) catch {};
 
     var game_view = try GameView.init();
     defer game_view.deinit();
@@ -200,7 +186,6 @@ pub const ColliderDrawQuery = ecez.Query(
     struct {
         rotation: *const Box2DRT.components.Rotation,
         box: *const Box2DRT.components.BoxCollider,
-        position: *const Box2DRT.components.Position,
     },
     .{},
     .{},
@@ -210,15 +195,16 @@ pub fn coliderDraw(collider_query: *ColliderDrawQuery) void {
     defer zone.End();
 
     while (collider_query.next()) |entity| {
+        const pos = Box2DRT.getRaylibWorldPos(entity.box.*);
         const rectangle = rl.Rectangle{
-            .x = entity.position.value.x,
-            .y = entity.position.value.y,
+            .x = pos.x,
+            .y = pos.y,
             .width = entity.box.extent.x,
             .height = entity.box.extent.y,
         };
         rl.drawRectanglePro(
             rectangle,
-            .zero(),
+            rl.Vector2{ .x = 0, .y = 0 },
             entity.rotation.degrees,
             .{ .r = 255, .g = 0, .b = 0, .a = 150 },
         );
