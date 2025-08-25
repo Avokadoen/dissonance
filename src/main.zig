@@ -154,7 +154,9 @@ pub fn main() anyerror!void {
             defer game_view.endRendering();
 
             // !!Game graphics here!!
-            try scheduler.dispatchEvent(&storage, .draw, .{});
+            try scheduler.dispatchEvent(&storage, .draw, DrawEventArgument{
+                .scene_editor = &scene_editor,
+            });
         }
 
         game_view.present(rl.Rectangle{
@@ -190,7 +192,11 @@ pub const ColliderDrawQuery = ecez.Query(
     .{},
     .{},
 );
-pub fn coliderDraw(collider_query: *ColliderDrawQuery) void {
+pub fn coliderDraw(collider_query: *ColliderDrawQuery, event_arg: DrawEventArgument) void {
+    if (event_arg.scene_editor.toolbar.render_entity_collider == false) {
+        return;
+    }
+
     const zone = ztracy.ZoneN(@src(), @src().fn_name);
     defer zone.End();
 
