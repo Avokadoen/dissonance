@@ -35,11 +35,18 @@ pub fn sceneEditorOverrideWidget(
     comptime Storage: type,
     storage: *Storage,
 ) void {
-    _ = selected_entity;
     _ = box2d_rt;
     _ = is_playing;
     _ = entity_inspector;
     _ = storage;
+
+    var buffer: ["Entity 9999999, Name:".len]u8 = undefined;
+    const str = std.fmt.bufPrint(&buffer, "Entity {d}, Name:", .{selected_entity.id}) catch fallback: {
+        const fallback_str = "Name:";
+        @memcpy(buffer[0..fallback_str.len], fallback_str);
+        break :fallback buffer[0..fallback_str.len];
+    };
+    buffer[str.len] = 0;
 
     const label_bounds = rl.Rectangle{
         .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
@@ -47,7 +54,7 @@ pub fn sceneEditorOverrideWidget(
         .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
         .height = layout_config.font_size * 1.5,
     };
-    _ = rgui.label(label_bounds, "Name:");
+    _ = rgui.label(label_bounds, buffer[0..str.len :0]);
 
     const text_box_bounds = rl.Rectangle{
         .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
