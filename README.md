@@ -4,7 +4,7 @@ A scene editor for raylib+ecez+zig.
 
 ## Requirements
 
-- zig 0.14.1
+- zig 0.15.1
 
 ## How to run 
 
