@@ -542,7 +542,7 @@ pub fn loadStyleDark() !void {
     // Load style properties provided
     @setRuntimeSafety(false);
     inline for (dark_style_props) |prop| {
-        rgui.rawSetStyle(@enumFromInt(prop.controlId), prop.propertyId, prop.propertyValue);
+        rgui.cdef.GuiSetStyle(@enumFromInt(prop.controlId), prop.propertyId, prop.propertyValue);
     }
     @setRuntimeSafety(true);
 
@@ -565,10 +565,10 @@ pub fn loadStyleDark() !void {
 
     // Copy char recs data from global fontRecs
     std.debug.assert(dark_font_recs.len == 189); // expected by the source code
-    font.recs = @alignCast(@ptrCast(rl.memAlloc(@intCast(font.glyphCount * @sizeOf(rl.Rectangle)))));
+    font.recs = @ptrCast(@alignCast(rl.memAlloc(@intCast(font.glyphCount * @sizeOf(rl.Rectangle)))));
     @memcpy(font.recs, &dark_font_recs);
 
-    font.glyphs = @alignCast(@ptrCast(rl.memAlloc(@intCast(font.glyphCount * @sizeOf(rl.GlyphInfo)))));
+    font.glyphs = @ptrCast(@alignCast(rl.memAlloc(@intCast(font.glyphCount * @sizeOf(rl.GlyphInfo)))));
     @memcpy(font.glyphs, &dark_font_glyphs);
 
     rgui.setFont(font);

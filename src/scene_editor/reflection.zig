@@ -23,7 +23,12 @@ pub fn renderStruct(
                     parent_bounds.y += switch (@typeInfo(arr_info.child)) {
                         .bool => renderBool(arr_element, field_name, parent_bounds),
                         .int, .float => renderIntOrFloat(entity_inspector, Struct, arr_info.child, arr_element, field_name, parent_bounds),
-                        .@"struct" => renderStruct(entity_inspector, arr_info.child, arr_element, parent_bounds),
+                        .@"struct" => struct_blk: {
+                            renderStruct(entity_inspector, arr_info.child, arr_element, parent_bounds);
+
+                            // parent_bounds are mutated internally by renderStruct
+                            break :struct_blk 0;
+                        },
                         .@"enum" => |enum_info| renderEnum(entity_inspector, enum_info, arr_info.child, arr_element, field_name, parent_bounds),
                         else => @compileError("Unimplemented"),
                     };
@@ -104,12 +109,14 @@ pub fn renderIntOrFloat(
         .float => {
             const edit_mode = rl.checkCollisionPointRec(rl.getMousePosition(), value_bound);
             var text_buffer: [64]u8 = undefined;
-            const float_str = std.fmt.formatFloat(
-                &text_buffer,
+            var text_buffer_write: std.io.Writer = .fixed(&text_buffer);
+            text_buffer_write.printValue(
+                "d",
+                .{},
                 value.*,
-                .{ .mode = .decimal, .precision = null },
+                std.options.fmt_max_depth,
             ) catch @panic("failed to format float");
-            text_buffer[float_str.len] = 0;
+            text_buffer[text_buffer_write.end] = 0;
 
             if (edit_mode) {
                 const this_float = std.hash.XxHash32.hash(0xABBAABBA, @typeName(ParentType) ++ field_name);
@@ -119,12 +126,14 @@ pub fn renderIntOrFloat(
                         .input_buffer = undefined,
                     } };
 
-                    const edit_buffer = std.fmt.formatFloat(
-                        &entity_inspector.active_edit.float.input_buffer,
+                    var edit_buffer_write: std.io.Writer = .fixed(&entity_inspector.active_edit.float.input_buffer);
+                    edit_buffer_write.printValue(
+                        "d",
+                        .{},
                         value.*,
-                        .{ .mode = .decimal, .precision = null },
+                        std.options.fmt_max_depth,
                     ) catch @panic("failed to format float");
-                    @memset(entity_inspector.active_edit.float.input_buffer[edit_buffer.len..], 0);
+                    @memset(entity_inspector.active_edit.float.input_buffer[edit_buffer_write.end..], 0);
                 }
 
                 const used_text_buffer = std.mem.span(@as([*:0]u8, @ptrCast(&entity_inspector.active_edit.float.input_buffer)));
@@ -132,7 +141,7 @@ pub fn renderIntOrFloat(
                 _ = rgui.valueBoxFloat(value_bound, "", used_text_buffer, &tmp_float, edit_mode);
                 value.* = @floatCast(tmp_float);
             } else {
-                const used_text_buffer = text_buffer[0..float_str.len :0];
+                const used_text_buffer = text_buffer[0..text_buffer_write.end :0];
                 var tmp_float: f32 = @floatCast(value.*);
                 _ = rgui.valueBoxFloat(value_bound, "", used_text_buffer, &tmp_float, edit_mode);
             }

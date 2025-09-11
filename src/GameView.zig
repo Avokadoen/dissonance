@@ -36,7 +36,7 @@ pub fn beginRendering(game_view: *GameView) void {
 
     // TODO: not needed when rendering fully
     const background_color_value = rgui.getStyle(.default, .{ .default = .background_color });
-    const background_color = rl.getColor(background_color_value);
+    const background_color = rl.getColor(@intCast(background_color_value));
     rl.clearBackground(background_color);
 }
 

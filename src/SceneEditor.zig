@@ -46,7 +46,7 @@ pub fn draw(
     defer zone.End();
 
     const style = rgui.getStyle(.default, .{ .default = .background_color });
-    rl.clearBackground(rl.getColor(style));
+    rl.clearBackground(rl.getColor(@intCast(style)));
 
     if (scene_editor.toolbar.panel_open != .none) {
         rgui.lock();

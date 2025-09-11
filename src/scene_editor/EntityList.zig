@@ -37,8 +37,8 @@ pub fn draw(
 
     const r_height = rl.getRenderHeight();
 
-    rgui.setStyle(.listview, .{ .listview = .scrollbar_side }, rgui.scrollbar_left_side);
-    const scroll_bar_size: f32 = @floatFromInt(rgui.getStyle(.scrollbar, .{ .scrollbar = .scroll_slider_size }));
+    rgui.cdef.GuiSetStyle(.listview, @intFromEnum(rgui.ListViewProperty.scrollbar_side), rgui.scrollbar_left_side);
+    const scroll_bar_size: f32 = @floatFromInt(rgui.cdef.GuiGetStyle(.scrollbar, @intFromEnum(rgui.ScrollBarProperty.scroll_slider_size)));
     const title = std.fmt.comptimePrint("#{d}#Entity List", .{@intFromEnum(rgui.IconName.box_grid)});
 
     const bounds = rl.Rectangle{
@@ -158,7 +158,7 @@ pub fn draw(
             if (rgui.button(button_bound, paste_entity_txt)) {
                 if (entity_list.entity_copy_bytes) |ezby_bytes| {
                     try box2d_rt.reset(allocator, Storage, storage);
-                    try ecez.ezby.deserialize(Storage, .append, storage, ezby_bytes);
+                    try ecez.ezby.deserialize(Storage, storage, ezby_bytes, .{ .op = .append });
                     try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
                 }
             }

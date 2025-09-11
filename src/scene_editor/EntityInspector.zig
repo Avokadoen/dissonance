@@ -65,10 +65,10 @@ pub fn draw(
         .height = bounds.height * 20,
     };
 
-    const scroll_bar_size: f32 = @floatFromInt(rgui.getStyle(.scrollbar, .{ .scrollbar = .scroll_slider_size }));
+    const scroll_bar_size: f32 = @floatFromInt(rgui.cdef.GuiGetStyle(.scrollbar, @intFromEnum(rgui.ScrollBarProperty.scroll_slider_size)));
 
     var view: rl.Rectangle = undefined;
-    rgui.setStyle(.listview, .{ .listview = .scrollbar_side }, rgui.scrollbar_right_side);
+    rgui.cdef.GuiSetStyle(.listview, @intFromEnum(rgui.ListViewProperty.scrollbar_side), rgui.scrollbar_right_side);
     const title = std.fmt.comptimePrint("#{d}#Entity Inspector", .{@intFromEnum(rgui.IconName.cube)});
     _ = rgui.scrollPanel(bounds, title, content, &entity_inspector.scroll, &view);
 

@@ -6,6 +6,7 @@ const rl = @import("raylib");
 const ztracy = @import("ztracy");
 
 const Box2DRT = @import("../Box2DRT.zig");
+const box2d = Box2DRT.box2d;
 const UpdateEventArgument = @import("../common.zig").UpdateEventArgument;
 const SceneEditor = @import("../SceneEditor.zig");
 const EntityInspector = @import("../SceneEditor.zig").EntityInspector;
@@ -13,8 +14,25 @@ const layout_config = SceneEditor.layout_config;
 const reflection = SceneEditor.reflection;
 const components = @import("components.zig");
 
-const box2d_c = @cImport(@cInclude("box2d/box2d.h"));
-pub const DynamicTag = struct {};
+pub const Dynamic = struct {
+    enable_hit_events: bool,
+    enable_contact_events: bool,
+};
+
+pub const HitEvents = GenEventType(struct {
+    other: ecez.Entity,
+    point: box2d.Vec2,
+    normal: box2d.Vec2,
+    approachSpeed: f32,
+});
+
+pub const TouchBeginEvents = GenEventType(struct {
+    other: ecez.Entity,
+});
+
+pub const TouchEndEvents = GenEventType(struct {
+    other: ecez.Entity,
+});
 
 pub const Position = struct {
     value: rl.Vector2,
@@ -25,9 +43,9 @@ pub const Rotation = struct {
 };
 
 pub const BoxCollider = struct {
-    body_id: box2d_c.b2BodyId = box2d_c.b2_nullBodyId,
-    shape_id: box2d_c.b2ShapeId,
-    extent: box2d_c.b2Vec2 = .{
+    body_id: box2d.BodyId = box2d.null_body_id,
+    shape_id: box2d.ShapeId,
+    extent: box2d.Vec2 = .{
         .x = 10,
         .y = 10,
     },
@@ -66,26 +84,25 @@ pub const BoxCollider = struct {
             return;
         };
 
-        const has_dynamic = storage.hasComponents(selected_entity, .{DynamicTag});
-
+        const maybe_dynamic = storage.getComponent(selected_entity, components.Dynamic);
         const radians = std.math.degreesToRadians(rotation.degrees);
-        const box2d_rot = box2d_c.b2MakeRot(radians);
-        const box2d_pos = box2d_c.b2Vec2{
+        const box2d_rot = box2d.makeRot(radians);
+        const box2d_pos = box2d.Vec2{
             .x = position.value.x,
             .y = position.value.y,
         };
 
         // Box newly created, register in box2d
-        if (box2d_c.B2_IS_NULL(box.body_id)) {
-            box2d_rt.createBody(selected_entity, box, box2d_pos, box2d_rot, has_dynamic);
+        if (box2d.isNull(box.body_id)) {
+            box2d_rt.createBody(selected_entity, box, box2d_pos, box2d_rot, maybe_dynamic);
         }
 
         if (is_playing == false) {
-            box2d_c.b2Body_SetTransform(box.body_id, box2d_pos, box2d_rot);
+            box2d.bodySetTransform(box.body_id, box2d_pos, box2d_rot);
         }
 
         const prev = box.extent;
-        reflection.renderStruct(entity_inspector, box2d_c.b2Vec2, &box.extent, parent_bounds);
+        reflection.renderStruct(entity_inspector, box2d.Vec2, &box.extent, parent_bounds);
         // TODO: float comparison bad
         if (prev.x == box.extent.x and prev.y == box.extent.y) {
             return;
@@ -95,13 +112,40 @@ pub const BoxCollider = struct {
         box.extent.x = @max(box.extent.x, 1);
         box.extent.y = @max(box.extent.y, 1);
 
-        if (box2d_c.B2_IS_NULL(box.shape_id) == false) {
+        if (box2d.isNull(box.shape_id) == false) {
             const update_body_mass = false;
-            box2d_c.b2DestroyShape(box.shape_id, update_body_mass);
+            box2d.shapeDestroy(box.shape_id, update_body_mass);
         }
 
-        const polygon = box2d_c.b2MakeBox(box.extent.x * 0.5, box.extent.y * 0.5);
-        var shape_def = Box2DRT.defaultShapeDef();
-        box.shape_id = box2d_c.b2CreatePolygonShape(box.body_id, &shape_def, &polygon);
+        const polygon = box2d.makeBox(box.extent.x * 0.5, box.extent.y * 0.5);
+        var shape_def = Box2DRT.defaultShapeDef(maybe_dynamic);
+        box.shape_id = box2d.bodyCreatePolygonShape(box.body_id, &shape_def, &polygon);
     }
 };
+
+fn GenEventType(comptime DataType: type) type {
+    return struct {
+        pub const EventType = @This();
+
+        pub const empty = EventType{
+            .event_len = 0,
+            .events = undefined,
+        };
+
+        pub const max_events = 8;
+
+        pub const Data = DataType;
+
+        event_len: u8,
+        events: [max_events]Data,
+
+        pub fn append(events: *EventType, data: Data) !void {
+            if (events.event_len >= max_events) {
+                return error.OutOfMemory;
+            }
+
+            events.events[events.event_len] = data;
+            events.event_len += 1;
+        }
+    };
+}

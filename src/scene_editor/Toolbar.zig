@@ -137,7 +137,7 @@ pub fn draw(
                     // Destroy physics world
                     try box2d_rt.reset(allocator, Storage, storage);
 
-                    try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_bytes);
+                    try ecez.ezby.deserialize(Storage, storage, ezby_bytes, .{ .op = .overwrite });
                     toolbar.game_loop_ezby_bytes = null;
                     allocator.free(ezby_bytes);
 
@@ -327,8 +327,12 @@ pub fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator:
     // Reset physics world
     try box2d_rt.reset(allocator, Storage, storage);
     switch (op) {
-        .overwrite => try ecez.ezby.deserialize(Storage, .overwrite, storage, ezby_scene),
-        .append => try ecez.ezby.deserialize(Storage, .append, storage, ezby_scene),
+        .overwrite => try ecez.ezby.deserialize(Storage, storage, ezby_scene, .{
+            .op = .overwrite,
+        }),
+        .append => try ecez.ezby.deserialize(Storage, storage, ezby_scene, .{
+            .op = .append,
+        }),
     }
     try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
 }

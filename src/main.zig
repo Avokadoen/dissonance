@@ -20,23 +20,33 @@ pub const components = .{
     Box2DRT.components.BoxCollider,
     Box2DRT.components.Position,
     Box2DRT.components.Rotation,
-    Box2DRT.components.DynamicTag,
+    Box2DRT.components.Dynamic,
+    Box2DRT.components.HitEvents,
+    Box2DRT.components.TouchBeginEvents,
+    Box2DRT.components.TouchEndEvents,
 };
 
-pub const systems = struct {};
+pub const Box2DSystems = Box2DRT.systems.Create(Storage);
 
 pub const Storage = ecez.CreateStorage(components);
 
-pub const Scheduler = ecez.CreateScheduler(.{
+pub const Scheduler = ecez.CreateScheduler(Storage, .{
     ecez.Event(
         "update",
         .{
-            Box2DRT.systems.doBox2DStep,
-            Box2DRT.systems.propagateBox2DPosition,
-            Box2DRT.systems.propagateBox2DRotation,
-            Box2DRT.systems.handleContactEvents,
+            Box2DSystems.doBox2DStep,
+            Box2DSystems.propagateBox2DPosition,
+            Box2DSystems.propagateBox2DRotation,
+            Box2DSystems.registerHitEvents,
+            Box2DSystems.registerTouchBeginEvents,
+            Box2DSystems.registerTouchEndEvents,
+            Box2DSystems.unRegisterHitEvents,
+            Box2DSystems.unRegisterTouchBeginEvents,
+            Box2DSystems.unRegisterTouchEndEvents,
         },
-        .{},
+        .{
+            .EventArgument = UpdateEventArgument,
+        },
     ),
     ecez.Event(
         "draw",
@@ -45,6 +55,7 @@ pub const Scheduler = ecez.CreateScheduler(.{
         },
         .{
             .run_on_main_thread = true,
+            .EventArgument = DrawEventArgument,
         },
     ),
 });
@@ -61,7 +72,9 @@ pub fn main() anyerror!void {
     var storage = try Storage.init(allocator);
     defer storage.deinit();
 
-    var scheduler = try Scheduler.init(.{
+    var scheduler = Scheduler.uninitialized;
+
+    try scheduler.init(.{
         .pool_allocator = allocator,
         .query_submit_allocator = allocator,
         .thread_count = null,
