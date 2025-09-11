@@ -1,6 +1,6 @@
 # Dissonance
 
-A scene editor for raylib+ecez+zig.
+A scene editor using [box2d](https://github.com/erincatto/box2d), [raylib](https://github.com/raysan5/raylib), [ecez](https://github.com/Avokadoen/ecez) and [zig](https://github.com/ziglang/zig/).
 
 ## Requirements
 
