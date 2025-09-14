@@ -13,31 +13,23 @@ pub fn renderStruct(
     parent_bounds: *rl.Rectangle,
 ) void {
     inline for (@typeInfo(Struct).@"struct".fields) |field| {
-        const y_stride = switch (@typeInfo(field.type)) {
+        switch (@typeInfo(field.type)) {
             .bool => renderBool(&@field(instance, field.name), field.name, parent_bounds),
             .int, .float => renderIntOrFloat(entity_inspector, Struct, field.type, &@field(instance, field.name), field.name, parent_bounds),
             .@"enum" => |enum_info| renderEnum(entity_inspector, enum_info, field.type, &@field(instance, field.name), field.name, parent_bounds),
-            .array => |arr_info| arr_blk: {
+            .array => |arr_info| {
                 inline for (&@field(instance, field.name), 0..) |*arr_element, index| {
                     const field_name = std.fmt.comptimePrint("{s}_{d}", .{ field.name, index });
-                    parent_bounds.y += switch (@typeInfo(arr_info.child)) {
+                    switch (@typeInfo(arr_info.child)) {
                         .bool => renderBool(arr_element, field_name, parent_bounds),
                         .int, .float => renderIntOrFloat(entity_inspector, Struct, arr_info.child, arr_element, field_name, parent_bounds),
-                        .@"struct" => struct_blk: {
-                            renderStruct(entity_inspector, arr_info.child, arr_element, parent_bounds);
-
-                            // parent_bounds are mutated internally by renderStruct
-                            break :struct_blk 0;
-                        },
+                        .@"struct" => renderStruct(entity_inspector, arr_info.child, arr_element, parent_bounds),
                         .@"enum" => |enum_info| renderEnum(entity_inspector, enum_info, arr_info.child, arr_element, field_name, parent_bounds),
                         else => @compileError("Unimplemented"),
-                    };
+                    }
                 }
-
-                // each element of the array progress parent_bounds
-                break :arr_blk 0;
             },
-            .@"struct" => struct_blk: {
+            .@"struct" => {
                 const label_bounds = rl.Rectangle{
                     .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
                     .y = parent_bounds.y,
@@ -48,21 +40,16 @@ pub fn renderStruct(
                 parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
 
                 renderStruct(entity_inspector, field.type, &@field(instance, field.name), parent_bounds);
-
-                // parent bounds are updated in renderStruct
-                break :struct_blk 0;
             },
             .@"union" => @compileError("Unimplemented"), // Is this needed?
             .optional => @compileError("Unimplemented"), // Is this needed?
             .pointer => @compileError("please dont use pointer in a component type!"), // This will lead to serialization issues :(
             else => |type_tag| @compileError("sceneEditorGenericWidget does not support " ++ @tagName(type_tag)),
-        };
-
-        parent_bounds.y += y_stride;
+        }
     }
 }
 
-pub fn renderBool(value: *bool, field_name: [:0]const u8, parent_bounds: *const rl.Rectangle) f32 {
+pub fn renderBool(value: *bool, field_name: [:0]const u8, parent_bounds: *rl.Rectangle) void {
     const checkbox_bound = rl.Rectangle{
         .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
         .y = parent_bounds.y,
@@ -71,7 +58,7 @@ pub fn renderBool(value: *bool, field_name: [:0]const u8, parent_bounds: *const 
     };
     _ = rgui.checkBox(checkbox_bound, field_name, value);
 
-    return checkbox_bound.height + layout_config.EntityInspector.spacing;
+    parent_bounds.y += checkbox_bound.height + layout_config.EntityInspector.spacing;
 }
 
 pub fn renderIntOrFloat(
@@ -80,8 +67,8 @@ pub fn renderIntOrFloat(
     comptime T: type,
     value: *T,
     comptime field_name: [:0]const u8,
-    parent_bounds: *const rl.Rectangle,
-) f32 {
+    parent_bounds: *rl.Rectangle,
+) void {
     const label_bounds = rl.Rectangle{
         .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
         .y = parent_bounds.y,
@@ -149,7 +136,7 @@ pub fn renderIntOrFloat(
         else => unreachable,
     }
 
-    return label_bounds.height + layout_config.EntityInspector.spacing + value_bound.height;
+    parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing + value_bound.height;
 }
 
 pub fn renderEnum(
@@ -158,8 +145,8 @@ pub fn renderEnum(
     comptime T: type,
     value: *T,
     field_name: [:0]const u8,
-    parent_bounds: *const rl.Rectangle,
-) f32 {
+    parent_bounds: *rl.Rectangle,
+) void {
     const label_bounds = rl.Rectangle{
         .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
         .y = parent_bounds.y,
@@ -228,7 +215,7 @@ pub fn renderEnum(
     _ = rgui.dropdownBox(value_bound, values_str, &tmp_value, edit_mode);
     value.* = @enumFromInt(tmp_value);
 
-    return edit_mode_bound.height + layout_config.EntityInspector.spacing + value_bound.height;
+    parent_bounds.y += edit_mode_bound.height + layout_config.EntityInspector.spacing + value_bound.height;
 }
 
 pub fn componentName(comptime Component: type) [:0]const u8 {
