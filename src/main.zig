@@ -133,13 +133,10 @@ pub fn main() anyerror!void {
         @intCast(rl.getRenderHeight()),
     };
 
-    var player_position: rl.Vector2 = .{ .x = screen_dim[0] / 2, .y = screen_dim[0] / 2 };
-
     while (!rl.windowShouldClose() and !request_close) { // Detect window close button or ESC key
         ztracy.FrameMark();
 
         const delta_time = rl.getFrameTime();
-        player_position = playerMovement(player_position);
         if (scene_editor.isGamePaused() == false) {
             const game_update_zone = ztracy.ZoneN(@src(), "game_update");
             defer game_update_zone.End();
@@ -178,8 +175,6 @@ pub fn main() anyerror!void {
             .width = @floatFromInt(current_game_view[2]),
             .height = @floatFromInt(current_game_view[3]),
         });
-
-        rl.drawCircleV(player_position, 20, .gold);
 
         rl.beginDrawing();
         defer rl.endDrawing();
@@ -228,25 +223,6 @@ pub fn coliderDraw(collider_query: *ColliderDrawQuery, event_arg: DrawEventArgum
             .{ .r = 255, .g = 0, .b = 0, .a = 150 },
         );
     }
-}
-
-pub fn playerMovement(player_pos: rl.Vector2) rl.Vector2 {
-    var x = player_pos.x;
-    var y = player_pos.y;
-
-    if (rl.isKeyDown(.right)) {
-        x += 3;
-    }
-    if (rl.isKeyDown(.left)) {
-        x -= 3;
-    }
-    if (rl.isKeyDown(.up)) {
-        y -= 3;
-    }
-    if (rl.isKeyDown(.down)) {
-        y += 3;
-    }
-    return rl.Vector2{ .x = x, .y = y };
 }
 
 /// Can be used to update a ezby file to understand the new component layout
