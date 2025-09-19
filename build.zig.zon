@@ -13,8 +13,8 @@
             .hash = "ecez-2.3.0-X-dkoP4NBgDbqyE-IJMZrAjVS70mIHAFaPE79saM-Kvw",
         },
         .box2d = .{
-            .url = "git+https://github.com/Avokadoen/box2d?ref=0.15.1#0e7ed2030ff6ee1b437eab4997e7494ab55843c8",
-            .hash = "box2d-3.0.0-C17qGDmbEAAsNnQSHqiyXd8raTW81Cuy2IvEVFP1t6gF",
+            .url = "git+https://github.com/Avokadoen/box2d#ab3baa02286494d68bdca2c1706ffbbf715df5a9",
+            .hash = "box2d-3.0.0-C17qGJ28EACVCJvwro9t7mTOjXZTdqHm0j97EKHVQnIP",
         },
     },
     .paths = .{

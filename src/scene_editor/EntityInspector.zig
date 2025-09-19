@@ -114,6 +114,7 @@ pub fn draw(
         break :entity_buttons_blk button_bound.y + button_bound.height + layout_config.font_size;
     };
 
+    const component_list = comptime reflection.getComponentList(Storage);
     const add_component_list_bound = rl.Rectangle{
         .x = bounds.x + layout_config.EntityInspector.component_field_width_padding,
         .y = y_stride + layout_config.EntityInspector.spacing,
@@ -123,7 +124,7 @@ pub fn draw(
     var hovering_list_bound = add_component_list_bound;
     {
         if (entity_inspector.hovering_component_dropdown) {
-            hovering_list_bound.height *= Storage.component_type_array.len + 1;
+            hovering_list_bound.height *= component_list.len + 1;
             entity_inspector.hovering_component_dropdown = rl.checkCollisionPointRec(rl.getMousePosition(), hovering_list_bound);
         } else {
             entity_inspector.hovering_component_dropdown = rl.checkCollisionPointRec(rl.getMousePosition(), add_component_list_bound);
@@ -131,15 +132,15 @@ pub fn draw(
 
         const add_str = "Add component;";
         comptime var str_size: usize = add_str.len;
-        inline for (Storage.component_type_array) |Component| {
-            const comp_name = comptime reflection.componentName(Component);
+        inline for (component_list) |component| {
+            const comp_name = comptime reflection.componentName(component.Component);
             // cull the zero delimiter
             str_size += comp_name.len - 1;
         }
         // Add 1 per ; needed + zero delimiter
-        str_size += Storage.component_type_array.len;
+        str_size += component_list.len;
 
-        var component_index_map: [Storage.component_type_array.len]u32 = undefined;
+        var component_index_map: [component_list.len]u32 = undefined;
         var dropdown_str_buf: [str_size]u8 = undefined;
         const add_component_dropdown_str: [:0]const u8 = create_dropdown_str_blk: {
             var used_size: usize = add_str.len;
@@ -149,7 +150,9 @@ pub fn draw(
                 entity_inspector.add_component_selected = 0;
             } else {
                 var component_index_map_index: usize = 0;
-                inline for (Storage.component_type_array, 0..) |Component, comp_index| {
+                inline for (component_list) |component_entry| {
+                    const Component = component_entry.Component;
+                    const comp_index = component_entry.global_index;
                     if (storage.hasComponents(selected_entity, .{Component}) == false) {
                         const comp_name: []const u8 = comptime reflection.componentName(Component);
                         @memcpy(dropdown_str_buf[used_size .. used_size + comp_name.len], comp_name);
@@ -173,7 +176,9 @@ pub fn draw(
         );
         if (mouse_pressed == 1 and entity_inspector.add_component_selected > 0) {
             const requested_component = component_index_map[@intCast(entity_inspector.add_component_selected - 1)];
-            inline for (Storage.component_type_array, 0..) |Component, comp_index| {
+            inline for (component_list) |component_entry| {
+                const Component = component_entry.Component;
+                const comp_index = component_entry.global_index;
                 if (requested_component == comp_index and storage.hasComponents(selected_entity, .{Component}) == false) {
                     // TODO: this may crash if running the editor in release, should @memset(0) instead of undefined!
                     // Respect default values, otherwise use undefined
@@ -193,7 +198,10 @@ pub fn draw(
         .width = bounds.width - scroll_bar_size,
         .height = @floatFromInt(layout_config.font_size),
     };
-    inline for (Storage.component_type_array, 0..) |Component, comp_index| {
+    inline for (component_list) |component_entry| {
+        const Component = component_entry.Component;
+        const comp_index = component_entry.global_index;
+
         if (storage.hasComponents(selected_entity, .{Component})) {
             const component_name = comptime reflection.componentName(Component);
             _ = rgui.line(components_bound, component_name);

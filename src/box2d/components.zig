@@ -125,6 +125,8 @@ pub const BoxCollider = struct {
 
 fn GenEventType(comptime DataType: type) type {
     return struct {
+        pub const IgnoreInEditor = struct {};
+
         pub const EventType = @This();
 
         pub const empty = EventType{

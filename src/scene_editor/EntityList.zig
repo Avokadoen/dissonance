@@ -131,7 +131,7 @@ pub fn draw(
                     var dummy_storage = try Storage.init(allocator);
                     defer dummy_storage.deinit();
 
-                    // create a new entiy in said storage
+                    // create a new entity in said storage
                     const place_holder_entity = try dummy_storage.createEntity(.{});
 
                     // foreach component, if present, get and add to new entity

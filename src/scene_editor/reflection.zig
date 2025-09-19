@@ -218,6 +218,33 @@ pub fn renderEnum(
     parent_bounds.y += edit_mode_bound.height + layout_config.EntityInspector.spacing + value_bound.height;
 }
 
+pub const ComponentListEntry = struct {
+    Component: type,
+    global_index: u32,
+};
+
+/// Get list of component editor actually can see.
+/// Components that has a decl with IgnoreInEditor will not be included in the editor
+pub fn getComponentList(comptime Storage: type) []const ComponentListEntry {
+    if (@inComptime() == false) {
+        @compileError("calling " ++ @src().fn_name ++ " on runtime is illegal (use comptime)");
+    }
+
+    comptime var component_array: [Storage.component_type_array.len]ComponentListEntry = undefined;
+    comptime var component_array_len = 0;
+    for (Storage.component_type_array, 0..) |Component, comp_index| {
+        if (@hasDecl(Component, "IgnoreInEditor") == false) {
+            component_array[component_array_len] = ComponentListEntry{
+                .Component = Component,
+                .global_index = comp_index,
+            };
+            component_array_len += 1;
+        }
+    }
+
+    return component_array[0..component_array_len];
+}
+
 pub fn componentName(comptime Component: type) [:0]const u8 {
     if (@inComptime() == false) {
         @compileError("calling " ++ @src().fn_name ++ " on runtime is illegal (use comptime)");
