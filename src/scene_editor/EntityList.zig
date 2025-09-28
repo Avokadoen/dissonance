@@ -159,7 +159,7 @@ pub fn draw(
                 if (entity_list.entity_copy_bytes) |ezby_bytes| {
                     try box2d_rt.reset(allocator, Storage, storage);
                     try ecez.ezby.deserialize(Storage, storage, ezby_bytes, .{ .op = .append });
-                    try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
+                    try box2d_rt.reloadAllPhysicsState(allocator, Storage, storage);
                 }
             }
 

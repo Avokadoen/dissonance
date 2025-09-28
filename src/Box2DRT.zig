@@ -169,7 +169,7 @@ pub fn reset(box2d_rt: *Box2DRT, allocator: std.mem.Allocator, comptime Storage:
 }
 
 /// Reload physics engine to sync with storage loads
-pub fn reloadPhysicsState(box2d_rt: *Box2DRT, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
+pub fn reloadAllPhysicsState(box2d_rt: *Box2DRT, allocator: std.mem.Allocator, comptime Storage: type, storage: *Storage) !void {
     const BoxColliderQuery = ecez.Query(struct {
         handle: ecez.Entity,
         box: *components.BoxCollider,
@@ -193,6 +193,37 @@ pub fn reloadPhysicsState(box2d_rt: *Box2DRT, allocator: std.mem.Allocator, comp
         var shape_def = defaultShapeDef(maybe_dynamic);
         entity.box.shape_id = box2d.bodyCreatePolygonShape(entity.box.body_id, &shape_def, &polygon);
     }
+}
+
+/// Reload physics state for one object to sync physics state with storage
+pub fn reloadSinglePhysicsState(box2d_rt: *Box2DRT, reload_entity: ecez.Entity, comptime Storage: type, storage: *Storage) void {
+    const entity = storage.getComponents(reload_entity, struct {
+        box: *components.BoxCollider,
+        position: *const components.Position,
+        rotation: *const components.Rotation,
+    }) orelse return;
+
+    if (entity.box.state_out_of_sync == false) {
+        return;
+    }
+
+    if (entity.box.extent.x == 0 or entity.box.extent.y == 0) {
+        return;
+    }
+
+    const maybe_dynamic = storage.getComponent(reload_entity, components.Dynamic);
+    const radians = std.math.degreesToRadians(entity.rotation.degrees);
+    const box2d_rot = box2d.makeRot(radians);
+    const box2d_pos = box2d.Vec2{
+        .x = entity.position.value.x,
+        .y = entity.position.value.y,
+    };
+    box2d_rt.createBody(reload_entity, entity.box, box2d_pos, box2d_rot, maybe_dynamic);
+    box2d.bodySetTransform(entity.box.body_id, box2d_pos, box2d_rot);
+
+    const polygon = box2d.makeBox(entity.box.extent.x * 0.5, entity.box.extent.y * 0.5);
+    var shape_def = defaultShapeDef(maybe_dynamic);
+    entity.box.shape_id = box2d.bodyCreatePolygonShape(entity.box.body_id, &shape_def, &polygon);
 }
 
 pub fn getRaylibWorldPos(box: components.BoxCollider) box2d.Vec2 {

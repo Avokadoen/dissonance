@@ -7,6 +7,7 @@ const rl = @import("raylib");
 const Box2DRT = @import("../Box2DRT.zig");
 const EntityInspector = @import("EntityInspector.zig");
 const layout_config = @import("layout_config.zig");
+const SceneEditorOverrideWidgetArgs = @import("argument_structs.zig").SceneEditorOverrideWidgetArgs;
 
 const EntityInfo = @This();
 
@@ -27,21 +28,14 @@ pub fn name(info: *EntityInfo) [:0]u8 {
 
 pub fn sceneEditorOverrideWidget(
     info: *EntityInfo,
-    selected_entity: ecez.Entity,
-    box2d_rt: Box2DRT,
-    entity_inspector: *EntityInspector,
-    is_playing: bool,
-    parent_bounds: *rl.Rectangle,
+    args: SceneEditorOverrideWidgetArgs,
     comptime Storage: type,
     storage: *Storage,
 ) void {
-    _ = box2d_rt;
-    _ = is_playing;
-    _ = entity_inspector;
     _ = storage;
 
     var buffer: ["Entity 9999999, Name:".len]u8 = undefined;
-    const str = std.fmt.bufPrint(&buffer, "Entity {d}, Name:", .{selected_entity.id}) catch fallback: {
+    const str = std.fmt.bufPrint(&buffer, "Entity {d}, Name:", .{args.selected_entity.id}) catch fallback: {
         const fallback_str = "Name:";
         @memcpy(buffer[0..fallback_str.len], fallback_str);
         break :fallback buffer[0..fallback_str.len];
@@ -49,22 +43,22 @@ pub fn sceneEditorOverrideWidget(
     buffer[str.len] = 0;
 
     const label_bounds = rl.Rectangle{
-        .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
-        .y = parent_bounds.y,
-        .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
+        .x = args.parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
+        .y = args.parent_bounds.y,
+        .width = args.parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
         .height = layout_config.font_size * 1.5,
     };
     _ = rgui.label(label_bounds, buffer[0..str.len :0]);
 
     const text_box_bounds = rl.Rectangle{
-        .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
+        .x = args.parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
         .y = label_bounds.y + label_bounds.height,
-        .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
+        .width = args.parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
         .height = layout_config.input_field_height,
     };
 
     const edit_mode = rl.checkCollisionPointRec(rl.getMousePosition(), text_box_bounds);
     _ = rgui.textBox(text_box_bounds, info.name(), info.name_buffer.len, edit_mode);
 
-    parent_bounds.y += text_box_bounds.height + label_bounds.height + layout_config.EntityInspector.spacing;
+    args.parent_bounds.y += text_box_bounds.height + label_bounds.height + layout_config.EntityInspector.spacing;
 }

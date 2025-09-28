@@ -9,6 +9,7 @@ const Box2DRT = @import("../Box2DRT.zig");
 const box2d = Box2DRT.box2d;
 const UpdateEventArgument = @import("../common.zig").UpdateEventArgument;
 const SceneEditor = @import("../SceneEditor.zig");
+const SceneEditorOverrideWidgetArgs = SceneEditor.argument_structs.SceneEditorOverrideWidgetArgs;
 const EntityInspector = @import("../SceneEditor.zig").EntityInspector;
 const layout_config = SceneEditor.layout_config;
 const reflection = SceneEditor.reflection;
@@ -52,39 +53,35 @@ pub const BoxCollider = struct {
 
     pub fn sceneEditorOverrideWidget(
         box: *BoxCollider,
-        selected_entity: ecez.Entity,
-        box2d_rt: Box2DRT,
-        entity_inspector: *EntityInspector,
-        is_playing: bool,
-        parent_bounds: *rl.Rectangle,
+        args: SceneEditorOverrideWidgetArgs,
         comptime Storage: type,
         storage: *Storage,
     ) void {
-        const position: Position = storage.getComponent(selected_entity, Position) orelse {
+        const position: Position = storage.getComponent(args.selected_entity, Position) orelse {
             const label_bounds = rl.Rectangle{
-                .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
-                .y = parent_bounds.y,
-                .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
+                .x = args.parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
+                .y = args.parent_bounds.y,
+                .width = args.parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
                 .height = layout_config.font_size * 1.5,
             };
             _ = rgui.label(label_bounds, "Box requires Position component!");
-            parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
+            args.parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
             return;
         };
 
-        const rotation: Rotation = storage.getComponent(selected_entity, Rotation) orelse {
+        const rotation: Rotation = storage.getComponent(args.selected_entity, Rotation) orelse {
             const label_bounds = rl.Rectangle{
-                .x = parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
-                .y = parent_bounds.y,
-                .width = parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
+                .x = args.parent_bounds.x + layout_config.EntityInspector.component_field_width_padding,
+                .y = args.parent_bounds.y,
+                .width = args.parent_bounds.width - (layout_config.EntityInspector.component_field_width_padding * 2),
                 .height = layout_config.font_size * 1.5,
             };
             _ = rgui.label(label_bounds, "Box requires Rotation component!");
-            parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
+            args.parent_bounds.y += label_bounds.height + layout_config.EntityInspector.spacing;
             return;
         };
 
-        const maybe_dynamic = storage.getComponent(selected_entity, components.Dynamic);
+        const maybe_dynamic = storage.getComponent(args.selected_entity, components.Dynamic);
         const radians = std.math.degreesToRadians(rotation.degrees);
         const box2d_rot = box2d.makeRot(radians);
         const box2d_pos = box2d.Vec2{
@@ -94,15 +91,15 @@ pub const BoxCollider = struct {
 
         // Box newly created, register in box2d
         if (box2d.isNull(box.body_id)) {
-            box2d_rt.createBody(selected_entity, box, box2d_pos, box2d_rot, maybe_dynamic);
+            args.box2d_rt.createBody(args.selected_entity, box, box2d_pos, box2d_rot, maybe_dynamic);
         }
 
-        if (is_playing == false) {
+        if (args.is_playing == false) {
             box2d.bodySetTransform(box.body_id, box2d_pos, box2d_rot);
         }
 
         const prev = box.extent;
-        reflection.renderStruct(entity_inspector, box2d.Vec2, &box.extent, parent_bounds);
+        reflection.renderStruct(args.entity_inspector, box2d.Vec2, &box.extent, args.parent_bounds);
         // TODO: float comparison bad
         if (prev.x == box.extent.x and prev.y == box.extent.y) {
             return;

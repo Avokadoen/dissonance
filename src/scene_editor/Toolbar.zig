@@ -141,7 +141,7 @@ pub fn draw(
                     toolbar.game_loop_ezby_bytes = null;
                     allocator.free(ezby_bytes);
 
-                    try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
+                    try box2d_rt.reloadAllPhysicsState(allocator, Storage, storage);
                 }
 
                 toolbar.game_loop_state = .stop;
@@ -334,7 +334,7 @@ pub fn loadScene(op: ecez.ezby.DeserializeOp, scene_name: []const u8, allocator:
             .op = .append,
         }),
     }
-    try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
+    try box2d_rt.reloadAllPhysicsState(allocator, Storage, storage);
 }
 
 fn getScenesDir(allocator: std.mem.Allocator) !std.fs.Dir {

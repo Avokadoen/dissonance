@@ -6,6 +6,7 @@ const rl = @import("raylib");
 const tracy = @import("ztracy");
 
 const Box2DRT = @import("Box2DRT.zig");
+pub const argument_structs = @import("scene_editor/argument_structs.zig");
 pub const EntityInspector = @import("scene_editor/EntityInspector.zig");
 const EntityList = @import("scene_editor/EntityList.zig");
 pub const layout_config = @import("scene_editor/layout_config.zig");

@@ -94,7 +94,7 @@ pub fn Create(comptime Storage: type) type {
                             .approachSpeed = hit_event.approachSpeed,
                         }) catch {
                             // TODO: replace with proper logging or some handling?
-                            std.debug.print("failed to append hit event!\n", .{});
+                            std.debug.print("failed to append HitEvent event!\n", .{});
                         };
                     }
                 }
@@ -127,7 +127,7 @@ pub fn Create(comptime Storage: type) type {
                             .other = reg.other,
                         }) catch {
                             // TODO: replace with proper logging or some handling?
-                            std.debug.print("failed to append hit event!\n", .{});
+                            std.debug.print("failed to append TouchBeginEvent event!\n", .{});
                         };
                     }
                 }
@@ -160,7 +160,7 @@ pub fn Create(comptime Storage: type) type {
                             .other = reg.other,
                         }) catch {
                             // TODO: replace with proper logging or some handling?
-                            std.debug.print("failed to append hit event!\n", .{});
+                            std.debug.print("failed to append TouchEndEvent event!\n", .{});
                         };
                     }
                 }

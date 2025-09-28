@@ -9,6 +9,7 @@ const Box2DRT = @import("../Box2DRT.zig");
 const EntityInfo = @import("EntityInfo.zig");
 const layout_config = @import("layout_config.zig");
 const reflection = @import("reflection.zig");
+const SceneEditorOverrideWidgetArgs = @import("argument_structs.zig").SceneEditorOverrideWidgetArgs;
 
 const EntityInspector = @This();
 
@@ -106,7 +107,7 @@ pub fn draw(
         if (rgui.button(button_bound, paste_txt)) {
             try box2d_rt.reset(allocator, Storage, storage);
             try readComponentFromClipboard(entity_inspector, selected_entity, Storage, storage);
-            try box2d_rt.reloadPhysicsState(allocator, Storage, storage);
+            try box2d_rt.reloadAllPhysicsState(allocator, Storage, storage);
         }
         button_bound.x -= button_bound.width + layout_config.EntityInspector.spacing;
 
@@ -246,12 +247,15 @@ pub fn draw(
                 const component = storage.getComponent(selected_entity, *Component).?;
 
                 if (comptime @hasDecl(Component, "sceneEditorOverrideWidget")) {
+                    const args = SceneEditorOverrideWidgetArgs{
+                        .selected_entity = selected_entity,
+                        .box2d_rt = box2d_rt,
+                        .entity_inspector = entity_inspector,
+                        .is_playing = is_playing,
+                        .parent_bounds = &components_bound,
+                    };
                     component.sceneEditorOverrideWidget(
-                        selected_entity,
-                        box2d_rt.*,
-                        entity_inspector,
-                        is_playing,
-                        &components_bound,
+                        args,
                         Storage,
                         storage,
                     );
