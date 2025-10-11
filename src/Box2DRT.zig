@@ -175,22 +175,22 @@ pub fn reloadAllPhysicsState(box2d_rt: *Box2DRT, allocator: std.mem.Allocator, c
         box: *components.BoxCollider,
         position: *const components.Position,
         rotation: *const components.Rotation,
+        maybe_dynamic: ?components.Dynamic,
     }, .{}, .{});
     var box_iter = try BoxColliderQuery.submit(allocator, storage);
     defer box_iter.deinit(allocator);
     while (box_iter.next()) |entity| {
-        const maybe_dynamic = storage.getComponent(entity.handle, components.Dynamic);
         const radians = std.math.degreesToRadians(entity.rotation.degrees);
         const box2d_rot = box2d.makeRot(radians);
         const box2d_pos = box2d.Vec2{
             .x = entity.position.value.x,
             .y = entity.position.value.y,
         };
-        box2d_rt.createBody(entity.handle, entity.box, box2d_pos, box2d_rot, maybe_dynamic);
+        box2d_rt.createBody(entity.handle, entity.box, box2d_pos, box2d_rot, entity.maybe_dynamic);
         box2d.bodySetTransform(entity.box.body_id, box2d_pos, box2d_rot);
 
         const polygon = box2d.makeBox(entity.box.extent.x * 0.5, entity.box.extent.y * 0.5);
-        var shape_def = defaultShapeDef(maybe_dynamic);
+        var shape_def = defaultShapeDef(entity.maybe_dynamic);
         entity.box.shape_id = box2d.bodyCreatePolygonShape(entity.box.body_id, &shape_def, &polygon);
     }
 }
@@ -203,13 +203,13 @@ pub fn reloadSinglePhysicsState(box2d_rt: *Box2DRT, reload_entity: ecez.Entity, 
         rotation: *const components.Rotation,
     }) orelse return;
 
-    if (entity.box.state_out_of_sync == false) {
-        return;
-    }
-
     if (entity.box.extent.x == 0 or entity.box.extent.y == 0) {
         return;
     }
+
+    const update_body_mass = false;
+    box2d.shapeDestroy(entity.box.shape_id, update_body_mass);
+    box2d.bodyDestroy(entity.box.body_id);
 
     const maybe_dynamic = storage.getComponent(reload_entity, components.Dynamic);
     const radians = std.math.degreesToRadians(entity.rotation.degrees);

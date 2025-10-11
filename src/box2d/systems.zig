@@ -13,11 +13,17 @@ pub fn Create(comptime Storage: type) type {
         /// Ecez is multithreaded, we must indicate to ecez that the next systems depend on this one
         /// Let box2d to its calculations
         pub fn doBox2DStep(rotation_barrier: *RotationPropagateQuery, position_barrier: *PositionPropagateQuery, event_argument: UpdateEventArgument) void {
-            const zone = ztracy.ZoneN(@src(), @src().fn_name);
-            defer zone.End();
             _ = rotation_barrier;
             _ = position_barrier;
-            box2d.worldStep(event_argument.box2d_rt.world_id, event_argument.delta_time, event_argument.box2d_rt.config.substeps);
+
+            const zone = ztracy.ZoneN(@src(), @src().fn_name);
+            defer zone.End();
+
+            box2d.worldStep(
+                event_argument.box2d_rt.world_id,
+                event_argument.delta_time,
+                event_argument.box2d_rt.config.substeps,
+            );
         }
 
         pub const RotationPropagateQuery = ecez.Query(struct {

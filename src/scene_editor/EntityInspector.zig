@@ -6,10 +6,12 @@ const rl = @import("raylib");
 const tracy = @import("ztracy");
 
 const Box2DRT = @import("../Box2DRT.zig");
+const argument_structs = @import("argument_structs.zig");
+const SceneEditorOverrideWidgetArgs = argument_structs.SceneEditorOverrideWidgetArgs;
+const SceneEditorOnAddedArgs = argument_structs.SceneEditorOnAddedArgs;
 const EntityInfo = @import("EntityInfo.zig");
 const layout_config = @import("layout_config.zig");
 const reflection = @import("reflection.zig");
-const SceneEditorOverrideWidgetArgs = @import("argument_structs.zig").SceneEditorOverrideWidgetArgs;
 
 const EntityInspector = @This();
 
@@ -183,7 +185,15 @@ pub fn draw(
                 if (requested_component == comp_index and storage.hasComponents(selected_entity, .{Component}) == false) {
                     // TODO: this may crash if running the editor in release, should @memset(0) instead of undefined!
                     // Respect default values, otherwise use undefined
-                    const inital_comp: Component = if (comptime reflection.componentHasDefaults(Component)) .{} else undefined;
+                    var inital_comp: Component = if (comptime reflection.componentHasDefaults(Component)) .{} else undefined;
+                    if (@hasDecl(Component, "sceneEditorOnAdded")) {
+                        const args = SceneEditorOnAddedArgs{
+                            .selected_entity = selected_entity,
+                            .box2d_rt = box2d_rt,
+                        };
+                        Component.sceneEditorOnAdded(&inital_comp, args, Storage, storage);
+                    }
+
                     try storage.setComponents(selected_entity, .{inital_comp});
 
                     entity_inspector.hovering_component_dropdown = false;

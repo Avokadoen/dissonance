@@ -11,3 +11,8 @@ pub const SceneEditorOverrideWidgetArgs = struct {
     is_playing: bool,
     parent_bounds: *rl.Rectangle,
 };
+
+pub const SceneEditorOnAddedArgs = struct {
+    selected_entity: ecez.Entity,
+    box2d_rt: *Box2DRT,
+};

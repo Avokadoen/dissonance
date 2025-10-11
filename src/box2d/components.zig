@@ -10,14 +10,25 @@ const box2d = Box2DRT.box2d;
 const UpdateEventArgument = @import("../common.zig").UpdateEventArgument;
 const SceneEditor = @import("../SceneEditor.zig");
 const SceneEditorOverrideWidgetArgs = SceneEditor.argument_structs.SceneEditorOverrideWidgetArgs;
+const SceneEditorOnAddedArgs = SceneEditor.argument_structs.SceneEditorOnAddedArgs;
 const EntityInspector = @import("../SceneEditor.zig").EntityInspector;
 const layout_config = SceneEditor.layout_config;
 const reflection = SceneEditor.reflection;
 const components = @import("components.zig");
 
 pub const Dynamic = struct {
-    enable_hit_events: bool,
-    enable_contact_events: bool,
+    enable_hit_events: bool = false,
+    enable_contact_events: bool = false,
+
+    pub fn sceneEditorOnAdded(
+        dynamic: *Dynamic,
+        args: SceneEditorOnAddedArgs,
+        comptime Storage: type,
+        storage: *Storage,
+    ) void {
+        _ = dynamic;
+        args.box2d_rt.reloadSinglePhysicsState(args.selected_entity, Storage, storage);
+    }
 };
 
 pub const HitEvents = GenEventType(struct {
@@ -45,7 +56,7 @@ pub const Rotation = struct {
 
 pub const BoxCollider = struct {
     body_id: box2d.BodyId = box2d.null_body_id,
-    shape_id: box2d.ShapeId,
+    shape_id: box2d.ShapeId = box2d.null_shape_id,
     extent: box2d.Vec2 = .{
         .x = 10,
         .y = 10,
@@ -117,6 +128,16 @@ pub const BoxCollider = struct {
         const polygon = box2d.makeBox(box.extent.x * 0.5, box.extent.y * 0.5);
         var shape_def = Box2DRT.defaultShapeDef(maybe_dynamic);
         box.shape_id = box2d.bodyCreatePolygonShape(box.body_id, &shape_def, &polygon);
+    }
+
+    pub fn sceneEditorOnAdded(
+        box: *BoxCollider,
+        args: SceneEditorOnAddedArgs,
+        comptime Storage: type,
+        storage: *Storage,
+    ) void {
+        _ = box;
+        args.box2d_rt.reloadSinglePhysicsState(args.selected_entity, Storage, storage);
     }
 };
 

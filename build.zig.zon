@@ -9,12 +9,12 @@
             .hash = "raylib_zig-5.6.0-dev-KE8RELMzBQBrG2nDjgoLezzb3sG35oOTW21fOUe9oBRb",
         },
         .ecez = .{
-            .url = "git+https://github.com/Avokadoen/ecez#a0db6f0b599a2a3edf002defaad4a007ade39aab",
-            .hash = "ecez-2.3.0-X-dkoM0GBgBoQzrpezZDkRNLXLsOXlZehJKsjYGAdQBa",
+            .url = "git+https://github.com/Avokadoen/ecez#7bb75291d4e5f210a014e7910f6d3e8cfa6638e4",
+            .hash = "ecez-2.3.0-X-dkoMI6BgDTaLtq7jtvinFN8c3oHK2gqPVT_AfBrhBm",
         },
         .box2d = .{
-            .url = "git+https://github.com/Avokadoen/box2d#ab3baa02286494d68bdca2c1706ffbbf715df5a9",
-            .hash = "box2d-3.0.0-C17qGJ28EACVCJvwro9t7mTOjXZTdqHm0j97EKHVQnIP",
+            .url = "git+https://github.com/Avokadoen/box2d#a3be7ed72038091f7c352d18dcb69e9e79eb19d4",
+            .hash = "box2d-3.0.0-C17qGCPCEAAb9RXXLDNsLZ_Vpp_mxnYrGltjR6cvvU2o",
         },
     },
     .paths = .{
